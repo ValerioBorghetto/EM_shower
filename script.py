@@ -12,8 +12,8 @@ depth=40
 material_Z=40 #per ora inutile
 ####################
 
-#disegna la rete che governa la cascata considerando l'energia iniziale
-draw_markov(initial_energy, tree=True, adj_matrix=True)
+#disegna la rete che governa la cascata considerando l'energia iniziale (da sistemare)
+#draw_markov(initial_energy, tree=True, adj_matrix=True)
 
 start=time.time()
 #genera la cascata
@@ -25,7 +25,7 @@ execution_time = end_time - start
 print(f"Execution time: {execution_time} seconds")
 
 #plotta la shower
-plot_shower(shower, tree=True, color=True)
+plot_shower(shower, tree=True, color=True) #tree decide se vuoi la raffigurazione ad albero, color se vuoi gli edges colorati
 #plotta l'energy depositata
 plot_energy(energy_deposed)
 

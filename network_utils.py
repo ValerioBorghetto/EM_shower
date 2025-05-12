@@ -58,18 +58,6 @@ def plot_shower(shower, tree=False, color=False):
         plt.show()
     plt.show()
 
-
-
-
-
-
-
-
-
-
-
-
-
 def plot_energy(energy_deposed):
     x = list(range(len(energy_deposed)))
     plt.figure(figsize=(10, 5))

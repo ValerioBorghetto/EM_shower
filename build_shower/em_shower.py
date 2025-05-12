@@ -7,26 +7,11 @@ from build_shower.em_utils import *
 E_cut=2 #MeV, sotto questa soglia l'energia si deposita
 ##################################
 
-#dizionario dei decadimenti
-decays = {
-    #"brems": [photon_decay, lepton_decay],
-    #"pp": [lepton_decay, lepton_decay],
-    "ann": [photon_decay],
-    #"stay_e": [lepton_decay],
-    "stay_p": [photon_decay],
-}
-
-
 #genera la shower, partendo da un bremsstralung
 def generate_shower(depth, initial_energy, Z):
-    # Lista di nodi e archi da costruire alla fine
-    nodes = []
-    edges = []
+    nodes, edges, history, energy_deposit= [], [], [], []
+    neg_buffer, pos_buffer = [], []
     step = 0
-    history = []  # array che contiene tutte le interazioni nello step n-esimo
-    neg_buffer = [] #elettroni
-    pos_buffer=[] #positroni
-    #used_nodes =set() #evitare  ripetizioni
 
     # STEP 0: electron iniziale che fa bremsstrahlung
     first_inter = interaction(kind="brems", step=step, substep=0, charge=-1, energy=initial_energy)
@@ -34,7 +19,6 @@ def generate_shower(depth, initial_energy, Z):
     nodes.append(first)
     history.append([first_inter])
     step += 1
-    energy_deposit=[]
 
     while step < depth:
         old_interactions = history[step - 1]
@@ -48,23 +32,22 @@ def generate_shower(depth, initial_energy, Z):
             if old_inter.energy<E_cut:
                 energy_state.append(old_inter.energy)
             elif old_inter.kind == "brems":
+                prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "brems")
                 if old_inter.charge == +1: #positrone
-                    prob_p, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "brems")
-                    positron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob_p, nodes, edges, step, substep,state, old_inter.charge, energy[0])
+                    positron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep,state, old_inter.charge, energy[0])
                     substep += 1
-                    photon_decay(nodes, edges, prob_p, old_inter, state, step, substep, energy[1])
+                    photon_decay(nodes, edges, prob, old_inter, state, step, substep, energy[1])
                     substep += 1
                 elif old_inter.charge == -1: #electron
-                    prob_e, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "brems")
-                    electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob_e, nodes, edges, step, substep,state, old_inter.charge, energy[0])
+                    electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep,state, old_inter.charge, energy[0])
                     substep += 1
-                    photon_decay(nodes, edges, prob_e, old_inter, state, step, substep, energy[1])
+                    photon_decay(nodes, edges, prob, old_inter, state, step, substep, energy[1])
                     substep += 1
             elif old_inter.kind == "pp": 
                 charge=old_inter.charge
+                prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "pp")
                 if charge==2:
                     #positrone
-                    prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "pp")
                     new_charge=+1
                     positron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step,substep, state, new_charge, energy[0])
                     substep += 1
@@ -73,12 +56,10 @@ def generate_shower(depth, initial_energy, Z):
                     electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step,substep, state, new_charge,energy[1])
                     substep += 1   
                 elif charge==+1: #rimasto solo il positrone
-                    prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "pp")
                     new_charge=+1
                     positron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep,state, new_charge, energy[0])
                     substep += 1
                 elif charge==-1: #rimasto solo l'electron
-                    prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "pp")
                     new_charge=-1
                     electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep, state, new_charge, energy[1])
                     substep += 1
@@ -111,8 +92,7 @@ def generate_shower(depth, initial_energy, Z):
                     neg_buffer.remove(n)
         history.append(state)
         energy_deposit.append(energy_state)
-        step += 1
-    # Una volta costruite liste di nodi e archi, creo il grafo (più veloce rispetto a aggiungere nodi di volta in volta)
+        step += 1        
     energy_for_step = [sum(sub) for sub in energy_deposit]
     shower = nx.DiGraph()
     shower.add_nodes_from(nodes)
