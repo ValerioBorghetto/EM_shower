@@ -8,9 +8,9 @@ def plot_adjacency_matrix(adj_matrix, title="Adjacency Matrix", labels=[]):
     plt.imshow(adj_matrix, cmap='gray_r', interpolation='none')
     plt.title(title)
     plt.colorbar(label="Edge Weight")
-    # Imposta le etichette per righe e colonne (gli stati)
-    plt.xticks(np.arange(len(labels)), labels, rotation=90)  # Etichette per le colonne, ruotate
-    plt.yticks(np.arange(len(labels)), labels)  # Etichette per le righe
+    # Imposta le etichette per righe e colonne
+    plt.xticks(np.arange(len(labels)), labels, rotation=90)  # Etichette per le colonne
+    plt.yticks(np.arange(len(labels)), labels)               # Etichette per le righe
     plt.show()
 
 
@@ -21,10 +21,10 @@ def plot_shower(shower, tree=False, color=False):
     # Mappa colori per tipi di kind
     color_map = {
         "brems": "#87CEEB",            # azzurro
-        "pp": "#00008B",  # blu scuro
-        "ann": "#FFD700",     # giallo
-        "stay_e": "#FFA500",           # arancione
-        "stay_p": "#FFA500"            # arancione
+        "pp":    "#00008B",            # blu scuro
+        "ann":   "#FFD700",            # giallo
+        "stay_e":"#FFA500",            # arancione
+        "stay_p":"#FFA500"             # arancione
     }
 
     # Colori per i nodi se richiesto
@@ -41,7 +41,7 @@ def plot_shower(shower, tree=False, color=False):
         with_labels=False,
         node_color=node_colors,
         edge_color="gray",
-        node_size=800,
+        node_size=80,
         font_size=8,
         arrows=True
     )
@@ -58,6 +58,7 @@ def plot_shower(shower, tree=False, color=False):
         plt.show()
     plt.show()
 
+
 def plot_energy(energy_deposed):
     x = list(range(len(energy_deposed)))
     plt.figure(figsize=(10, 5))
@@ -68,3 +69,14 @@ def plot_energy(energy_deposed):
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
+#is symmetric?
+def is_symmetric(A):
+    return np.all(A - A.T == 0)
+
+#is upper triangular
+def is_upper_triangular(adj_matrix):
+    return np.allclose(adj_matrix, np.triu(adj_matrix))
+
+
+
