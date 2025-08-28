@@ -50,7 +50,7 @@ def build_markov(lepton_energy, photon_energy, Z, buffer, old_interactions):
     return prob
 
 def draw_markov(energy, tree=True, adj_matrix=True):
-    prob=build_markov(energy, energy, 0, 0, 0) #da moodificare!!!
+    prob=build_markov(energy, energy, 0, ["stay_e", "stay_p", "bremss", "pp"], ["stay_e", "stay_p", "bremss", "pp", "pp", "stay_p", "stay_e", "brems"]) #da moodificare!!! INventa
     states = ['brems', 'pp', 'ann', 'stay_e', 'stay_p']
     G = nx.DiGraph()
     G.add_nodes_from(states)
@@ -64,6 +64,8 @@ def draw_markov(energy, tree=True, adj_matrix=True):
     if adj_matrix:
         transition_matrix = nx.to_numpy_array(G, nodelist=states)
         plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
+    return G
+        
 
 def create_buffer(old_interactions, pos_buffer, neg_buffer): #crea i due buffer, ovvero gli array contenti tutti gli elettroni (o positroni) liberi
     for old_inter in old_interactions:
@@ -79,7 +81,7 @@ def create_buffer(old_interactions, pos_buffer, neg_buffer): #crea i due buffer,
 def generate_interaction(nodes, edges, new_inter, old_inter, state):
     new = f"{new_inter.step}_{new_inter.kind}_{new_inter.substep}" 
     previous = f"{old_inter.step}_{old_inter.kind}_{old_inter.substep}"
-    nodes.append((new,{"charge": new_inter.charge, "kind": new_inter.kind}))
+    nodes.append((new,{"charge": new_inter.charge, "kind": new_inter.kind, "step":new_inter.step}))
     edges.append((previous, new, {"charge":new_inter.charge})) 
     state.append(new_inter)
 

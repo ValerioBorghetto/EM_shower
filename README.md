@@ -22,3 +22,4 @@ Per far andare il codice sono necessari i seguenti pacchetti:
 - Numpy
 - Matplotlib
 - Networkx
+- Pygraphviz (sudo apt-get install graphviz graphviz-dev // pip install pygrahviz)

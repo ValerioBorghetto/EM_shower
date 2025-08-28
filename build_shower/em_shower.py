@@ -8,17 +8,23 @@ E_cut=2 #MeV, sotto questa soglia l'energia si deposita
 ##################################
 
 #genera la shower, partendo da un bremsstralung
-def generate_shower(depth, initial_energy, Z):
+def generate_shower(depth, initial_energy, Z, initial_particle):
     nodes, edges, history, energy_deposit= [], [], [], []
     neg_buffer, pos_buffer = [], []
     step = 0
 
     # STEP 0: electron iniziale che fa bremsstrahlung
-    first_inter = interaction(kind="brems", step=step, substep=0, charge=-1, energy=initial_energy)
+    if (initial_particle=="electron"):
+        first_inter = interaction(kind="brems", step=step, substep=0, charge=-1, energy=initial_energy)
+    elif (initial_particle=="photon"): #DA TESTARE
+        first_inter = interaction(kind="pp", step=step, substep=0, charge=2, energy=initial_energy)  
+    else:
+        print("Invalid first particle")   
     first = f"{first_inter.step}_{first_inter.kind}_{first_inter.substep}"
     nodes.append(first)
     history.append([first_inter])
     step += 1
+    counter_int=0
 
     while step < depth:
         old_interactions = history[step - 1]
@@ -92,11 +98,13 @@ def generate_shower(depth, initial_energy, Z):
                     neg_buffer.remove(n)
         history.append(state)
         energy_deposit.append(energy_state)
-        step += 1        
+        step += 1   
+        counter_int=counter_int+len(state)     
     energy_for_step = [sum(sub) for sub in energy_deposit]
     shower = nx.DiGraph()
     shower.add_nodes_from(nodes)
     shower.add_edges_from(edges)
-
+    print("nodi totali", counter_int, '\n')
+    print("link totali", shower.number_of_edges(), '\n')    
     return shower, energy_for_step
 
