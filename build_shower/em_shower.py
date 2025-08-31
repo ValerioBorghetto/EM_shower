@@ -104,7 +104,7 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
     shower = nx.DiGraph()
     shower.add_nodes_from(nodes)
     shower.add_edges_from(edges)
-    print("nodi totali", counter_int, '\n')
-    print("link totali", shower.number_of_edges(), '\n')    
+    #print("nodi totali", counter_int, '\n')
+    #print("link totali", shower.number_of_edges(), '\n')    
     return shower, energy_for_step
 

@@ -12,10 +12,10 @@ class interaction():
     def __init__(self, kind, step, substep, energy, charge=None):
         #kind=il tipo di interazione; step=il numero di passi della doccia; substep=in ogni passo, traccia i vari decadimenti
         self.kind = kind
-        self.step=step
+        self.step = step
         self.substep = substep
-        self.energy=energy
-        self.charge= charge #+1=positrone, 0=fotone, -1=elettrone, +2 elettrone e positrone insieme (pp)
+        self.energy = energy
+        self.charge = charge #+1=positrone, 0=fotone, -1=elettrone, +2 elettrone e positrone insieme (pp)
     def print_inter(self):
         print(f"Type: {self.kind}, Charge: {self.charge}")
     def int_name(self):
@@ -114,6 +114,8 @@ def positron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, no
         new_kind = "stay_e"
         new_inter=interaction(kind=new_kind, step=step, substep=substep, charge=charge, energy=energy)
         generate_interaction(nodes, edges, new_inter, old_inter, state) 
+    if old_inter in pos_buffer:
+        pos_buffer.remove(old_inter)
     pos_buffer.remove(old_inter)
 
 def electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep, state, charge, energy):
@@ -137,7 +139,9 @@ def electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, no
         new_kind = "stay_e"
         new_inter=interaction(kind=new_kind, step=step, substep=substep, charge=charge, energy=energy)
         generate_interaction(nodes, edges, new_inter, old_inter, state)       
-    neg_buffer.remove(old_inter)
+    if old_inter in neg_buffer:    
+        neg_buffer.remove(old_inter)
+    #neg_buffer.remove(old_inter)
 
 
 def energy_division(total_energy, Z, interactions, buffer, daughters): 

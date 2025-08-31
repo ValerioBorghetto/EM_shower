@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 import time
 
 ###settings###########
-initial_energy=30 #(MeV), >10 for relativistic limit
-depth=40
-material_Z=40 #per ora inutile
+initial_energy=300  #(MeV), >10 for relativistic limit
+depth=40            #Maximum depth of the material
+material_Z=40       #work in progress
 ####################
-
+"""
 #disegna la rete che governa la cascata considerando l'energia iniziale (N.B. la probabilità nella shower si aggiorna di volta in volta
 #questa è invece a probabilità fissa. Per la relazione quindi avrebbe senso modificare la porbabilità così che rispecchi mediamente il comportamento
 #generale della shower
@@ -47,4 +47,7 @@ plot_kinds(shower)
 
 plot_width(shower)
 
+#study the mean values over different initial energy values
+shower_study(10, 1000, 10, energy=True, width=True)
+"""
 

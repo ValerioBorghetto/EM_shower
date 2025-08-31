@@ -2,6 +2,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
 from network_utils import*
+from build_shower.em_shower import*
+from tqdm import tqdm
 
 #centrality measures
 def centrality_meas(graph, kind="in_degree", show=True):
@@ -68,3 +70,67 @@ def plot_width(shower):
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
+
+def shower_study(initial_energy, final_energy, times, energy=True, width=True):
+    step=(final_energy-initial_energy)/times
+    energy=initial_energy
+    levels_array=[]
+    err_levels_array=[]
+    energy_array=[]
+    width_array=[]
+    err_width_array=[]
+    n_iter=30
+    for _ in tqdm(range(times), desc="Simulation"):
+        energy_array.append(energy)
+        sub_level=[]
+        sub_width=[]
+        for i in range(n_iter):
+            shower, energy_deposed=generate_shower(depth=40, initial_energy=energy, Z=10, initial_particle="electron")
+            if energy:
+                max_energy = max(energy_deposed)
+                max_level = energy_deposed.index(max_energy)    
+                sub_level.append(max_level)            
+            if width:
+                depth = list(nx.get_node_attributes(shower, "step").values())
+                levels, counts = np.unique(depth, return_counts=True)
+                max_level_index = np.argmax(counts)
+                max_depth = levels[max_level_index]  
+                sub_width.append(max_depth)  
+        mean_level = np.mean(sub_level)
+        err_level = np.std(sub_level, ddof=1) / np.sqrt(len(sub_level)) 
+        mean_width = np.mean(sub_width)
+        err_width = np.std(sub_width, ddof=1) / np.sqrt(len(sub_width)) 
+        if mean_level != 0:           
+            levels_array.append(mean_level)
+            err_levels_array.append(err_level)
+        if mean_width != 0:
+            width_array.append(mean_width)
+            err_width_array.append(err_width)
+        energy += step
+    
+    #Plot
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))  
+    # Primo grafico
+    ax1.errorbar(energy_array, levels_array, yerr=err_levels_array, fmt='o-', capsize=5, label='Level')
+    ax1.set_title("Maximum energy depth vs Initial energy")
+    ax1.set_xlabel("Initial energy")
+    ax1.set_ylabel("Depth with max. energy deposit")
+    ax1.grid(True)
+
+    # Secondo grafico
+    ax2.errorbar(energy_array, width_array, yerr=err_width_array, fmt='s--', capsize=5, color='orange', label='Level')
+    ax2.set_title("Maximum interaction depth vs Initial energy")
+    ax2.set_xlabel("Initial Energy")
+    ax2.set_ylabel("Depth with max. #interaction")
+    ax2.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+    
+    
+
+        
+    
+
+

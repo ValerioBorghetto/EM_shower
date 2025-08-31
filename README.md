@@ -1,25 +1,38 @@
 # EM_shower
 This repository contains a model to build and study electromagnetic showers using complex network theory. 
 
-# Logica della creazione della cascata.
-Il modello si basa su 5 possibili interazioni:
+# Logic of the Cascade Creation
+The model i based on 5 possible interactions:
 - Bremsstralhung
 - Annihilation
-- Rimanere un elettrone (o positrone)
+- Stay an electron (or positron)
 * Pair production
-* Rimanere un fotone
+* Stay a photon
 
 
-Le prime tre sono le tre possibilità che un elettrone (o positrone) ha, le restanti due di un fotone. Ad ogni step, per ogni particella viene scelto uno dei possibili processi (l'idea alla base è un Markov process). La scelta dipende dalle vaire probabilità, che sono calcolate di volta in volta a seconda dell'energia della particella (la dipendenza dal materiale ancora non è stata inserita). Ad ogni step, l'energia viene trasferita dalle particelle madri alle figlie, dimezzandosi di volta in volta. Quando l'energia va sotto una certa soglia, questa viene assorbita dal bersaglio.
-La rete viene costruita usando come nodi le interazioni, e come link le particelle, così da simulare meglio la propagazione della cascata nel materiale. 
+The first three are the possible processes for an electron (or positron), while the remaining two are for a photon. At each step, for every particle, one of the possible processes is selected (the underlying idea is a Markov process). The choice depends on various probabilities, which are calculated at each step based on the particle’s energy (the dependence on the material has not yet been implemented). At each step, the energy is transferred from the parent particles to the daughter particles, halving at each iteration. When the energy falls below a certain threshold, it is absorbed by the target.
+The network is built using interactions as nodes and particles as links, in order to better simulate the propagation of the cascade in the material.
 
-# Analisi della simulazione
+# Analysis of the simulation
 
 Work in progress
 
-# Pacchetti necessari per il funzionamento:
-Per far andare il codice sono necessari i seguenti pacchetti:
-- Numpy
-- Matplotlib
-- Networkx
-- Pygraphviz (sudo apt-get install graphviz graphviz-dev // pip install pygrahviz)
+## Requirements
+
+To run this project, simply execute the `script.py` file. You then need the following Python packages:
+
+- [NumPy](https://numpy.org/)
+- [Matplotlib](https://matplotlib.org/)
+- [NetworkX](https://networkx.org/)
+- [SciPy](https://scipy.org/)
+- [PyGraphviz](https://pygraphviz.github.io/)
+  - Install system dependencies:  
+    ```bash
+    sudo apt-get install graphviz graphviz-dev
+    ```
+  - Then install PyGraphviz with pip:  
+    ```bash
+    pip install pygraphviz
+    ```
+- [tqdm](https://github.com/tqdm/tqdm)
+
