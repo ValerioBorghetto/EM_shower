@@ -60,7 +60,9 @@ def draw_markov(energy, tree=True, adj_matrix=True):
             if weight>0:
                 G.add_edge(state_from, state_to, weight=weight)
     if tree:
+        plt.figure(figsize=(8,5))
         nx.draw(G, with_labels=True)
+        plt.savefig("Markov.pdf")
     if adj_matrix:
         transition_matrix = nx.to_numpy_array(G, nodelist=states)
         plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)

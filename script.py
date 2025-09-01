@@ -13,6 +13,8 @@ depth=40
 material_Z=40 #per ora inutile
 ####################
 
+#markov chain: nodo=stato, link= transizione possibile tra stati. ad ogni stato è associata una probabilità di transizione 
+
 #disegna la rete che governa la cascata considerando l'energia iniziale (N.B. la probabilità nella shower si aggiorna di volta in volta
 #questa è invece a probabilità fissa. Per la relazione quindi avrebbe senso modificare la porbabilità così che rispecchi mediamente il comportamento
 #generale della shower

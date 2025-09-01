@@ -11,7 +11,7 @@ def plot_adjacency_matrix(adj_matrix, title="Adjacency Matrix", labels=[]):
     # Imposta le etichette per righe e colonne
     plt.xticks(np.arange(len(labels)), labels, rotation=90)  # Etichette per le colonne
     plt.yticks(np.arange(len(labels)), labels)               # Etichette per le righe
-    plt.show()
+    plt.savefig(f"{title}.pdf")
 
 
 def plot_shower(shower, tree=False, color=False):
@@ -55,8 +55,9 @@ def plot_shower(shower, tree=False, color=False):
         plt.legend(title="Kind")
         plt.title("Legenda tipi di interazione")
         plt.axis('off')
-        plt.show()
-    plt.show()
+        plt.savefig("shower.pdf")
+
+    plt.savefig("shower.pdf")
 
 
 def plot_energy(energy_deposed):
@@ -68,7 +69,8 @@ def plot_energy(energy_deposed):
     plt.ylabel('Energy (MeV)')
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
+    plt.savefig("energy.pdf")
+
 
 #is symmetric?
 def is_symmetric(A):
@@ -77,6 +79,5 @@ def is_symmetric(A):
 #is upper triangular
 def is_upper_triangular(adj_matrix):
     return np.allclose(adj_matrix, np.triu(adj_matrix))
-
 
 
