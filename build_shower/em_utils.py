@@ -49,7 +49,7 @@ def build_markov(lepton_energy, photon_energy, Z, buffer, old_interactions):
     }
     return prob
 
-def draw_markov(energy, tree=True, adj_matrix=True):
+def build_draw_markov(energy, tree=True, adj_matrix=True):
     prob=build_markov(energy, energy, 0, ["stay_e", "stay_p", "bremss", "pp"], ["stay_e", "stay_p", "bremss", "pp", "pp", "stay_p", "stay_e", "brems"]) #da moodificare!!! INventa
     states = ['brems', 'pp', 'ann', 'stay_e', 'stay_p']
     G = nx.DiGraph()
@@ -64,6 +64,20 @@ def draw_markov(energy, tree=True, adj_matrix=True):
     if adj_matrix:
         transition_matrix = nx.to_numpy_array(G, nodelist=states)
         plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
+    return G
+
+def draw_markov(probability_matrix):
+    states = ['brems', 'pp', 'ann', 'stay_e', 'stay_p']
+    G = nx.DiGraph()
+    G.add_nodes_from(states)
+    for state_from in states:
+        for state_to in states:
+            weight = probability_matrix[state_from].get(state_to, 0) #se non lo trova da 0
+            if weight>0:
+                G.add_edge(state_from, state_to, weight=weight)
+    nx.draw(G, with_labels=True)
+    transition_matrix = nx.to_numpy_array(G, nodelist=states)
+    plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
     return G
         
 
@@ -116,7 +130,7 @@ def positron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, no
         generate_interaction(nodes, edges, new_inter, old_inter, state) 
     if old_inter in pos_buffer:
         pos_buffer.remove(old_inter)
-    pos_buffer.remove(old_inter)
+    #pos_buffer.remove(old_inter)
 
 def electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep, state, charge, energy):
     r2 = random.random()
