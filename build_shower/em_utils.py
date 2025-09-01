@@ -12,10 +12,10 @@ class interaction():
     def __init__(self, kind, step, substep, energy, charge=None):
         #kind=il tipo di interazione; step=il numero di passi della doccia; substep=in ogni passo, traccia i vari decadimenti
         self.kind = kind
-        self.step=step
+        self.step = step
         self.substep = substep
-        self.energy=energy
-        self.charge= charge #+1=positrone, 0=fotone, -1=elettrone, +2 elettrone e positrone insieme (pp) -> defines the nature of leptons
+        self.energy = energy
+        self.charge = charge #+1=positrone, 0=fotone, -1=elettrone, +2 elettrone e positrone insieme (pp)
     def print_inter(self):
         print(f"Type: {self.kind}, Charge: {self.charge}")
     def int_name(self):
@@ -23,8 +23,13 @@ class interaction():
 
 #Probabilities of interactions
 #Bremsstralhung
-def bremss_probab(E0, Z):
-    return 0.98 / (1 + np.exp(- (np.log10(E0) - np.log10(3)) * 40)) * (E0 >= 1)
+def bremss_probab(E0, Z): #E0 è l'energia iniziale
+    if E0 == 0:
+        print("Warning: E0=0 in bremss_probab")
+        return 1e-10  # Evita log(0)
+
+    else:
+        return 0.98 / (1 + np.exp(- (np.log10(E0) - np.log10(3)) * 40)) * (E0 >= 1)
 #Pair production
 def pairprod_probab(E0, Z):
     return 1 / (1 + np.exp(- (np.log10(E0) - np.log10(3)) * 40)) * (E0 >= 1)
@@ -62,7 +67,7 @@ def draw_markov(energy, tree=True, adj_matrix=True):
     if tree:
         plt.figure(figsize=(8,5))
         nx.draw(G, with_labels=True)
-        plt.savefig("Markov.pdf")
+        plt.savefig("../plots/Markov.pdf")
     if adj_matrix:
         transition_matrix = nx.to_numpy_array(G, nodelist=states)
         plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
@@ -117,7 +122,8 @@ def positron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, no
         new_kind = "stay_e"
         new_inter=interaction(kind=new_kind, step=step, substep=substep, charge=charge, energy=energy)
         generate_interaction(nodes, edges, new_inter, old_inter, state) 
-    pos_buffer.remove(old_inter)
+    if old_inter in pos_buffer:
+        pos_buffer.remove(old_inter)
 
 def electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep, state, charge, energy):
     r2 = random.random()
@@ -140,7 +146,9 @@ def electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, no
         new_kind = "stay_e"
         new_inter=interaction(kind=new_kind, step=step, substep=substep, charge=charge, energy=energy)
         generate_interaction(nodes, edges, new_inter, old_inter, state)       
-    neg_buffer.remove(old_inter)
+    if old_inter in neg_buffer:    
+        neg_buffer.remove(old_inter)
+    #neg_buffer.remove(old_inter)
 
 
 def energy_division(total_energy, Z, interactions, buffer, daughters): 

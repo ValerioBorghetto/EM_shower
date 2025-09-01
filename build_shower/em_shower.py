@@ -25,7 +25,7 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
     history.append([first_inter]) #start only with bremsstralhung
     step += 1
     counter_int=0
-
+    markov_array=[]
     while step < depth:
         old_interactions = history[step - 1] #only last step
         if len(old_interactions)==0:
@@ -102,12 +102,13 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
         history.append(state)
         energy_deposit.append(energy_state)
         step += 1   
-        counter_int=counter_int+len(state)     
+        counter_int=counter_int+len(state) 
+        markov_array.append(prob)
     energy_for_step = [sum(sub) for sub in energy_deposit]
     shower = nx.DiGraph()
     shower.add_nodes_from(nodes)
     shower.add_edges_from(edges)
-    print("nodi totali", counter_int, '\n')
-    print("link totali", shower.number_of_edges(), '\n')    
-    return shower, energy_for_step
+    #print("nodi totali", counter_int, '\n')
+    #print("link totali", shower.number_of_edges(), '\n')    
+    return shower, energy_for_step, markov_array
 

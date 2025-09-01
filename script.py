@@ -8,27 +8,26 @@ import matplotlib.pyplot as plt
 import time
 
 ###settings###########
-initial_energy=30 #(MeV), >10 for relativistic limit
-depth=40
-material_Z=40 #per ora inutile
+initial_energy=3000  #(MeV), >10 for relativistic limit
+depth=40            #Maximum depth of the material
+material_Z=40       #work in progress
 ####################
 
 #markov chain: nodo=stato, link= transizione possibile tra stati. ad ogni stato è associata una probabilità di transizione 
-
+"""
 #disegna la rete che governa la cascata considerando l'energia iniziale (N.B. la probabilità nella shower si aggiorna di volta in volta
 #questa è invece a probabilità fissa. Per la relazione quindi avrebbe senso modificare la porbabilità così che rispecchi mediamente il comportamento
 #generale della shower
-graph_m=draw_markov(initial_energy, tree=True, adj_matrix=True)
+graph_m=build_draw_markov(initial_energy, tree=True, adj_matrix=True)
 
 #centrality measures of the markov graph (bisogna però mettere le giuste probabilità sulla markov)
 measures=["eigenvector", "betweenness", "in_degree", "out_degree", "flow betweenness"]
 for m in measures:
     meas=centrality_meas(graph_m, kind=m)
-
+"""
 start=time.time()
 #generate the shower
-shower, energy_deposed=generate_shower(depth=depth, initial_energy=initial_energy, Z=material_Z, initial_particle="electron") #30--->2 seconds
-
+shower, energy_deposed, markov_array=generate_shower(depth=depth, initial_energy=initial_energy, Z=material_Z, initial_particle="electron") #30--->2 seconds
 
 #execution time
 end_time = time.time()
@@ -44,9 +43,17 @@ adj_matrix_study(shower)
 #study of the shower properties
 #plot deposited energy
 plot_energy(energy_deposed)
-
+#plot different interaction kinds occurrence
 plot_kinds(shower)
-
+#plot the width of the shower 
 plot_width(shower)
 
+#study the mean values over different initial energy values
+shower_study(10, 1000, 10, energy=True, width=True)
 
+#fa la media di tutte le markov della shower, e ne studia le misure di centralità
+avg_matrix=average_markov(markov_array)
+avg_graph=draw_markov(avg_matrix)
+measures=["eigenvector", "betweenness", "in_degree", "out_degree", "flow betweenness"]
+for m in measures:
+    meas=centrality_meas(avg_graph, kind=m)
