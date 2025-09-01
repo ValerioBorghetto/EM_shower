@@ -27,7 +27,8 @@ def centrality_meas(graph, kind="in_degree", show=True):
         plt.bar(labels, values, color='skyblue')
         plt.ylabel('Degree')
         plt.xlabel('Process')
-        plt.title('Degree for each process')
+        title=kind + " degree for each process"
+        plt.title(title)
         plt.show()
     return meas
 
@@ -129,6 +130,20 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
     plt.show()
     
     
+def average_markov(markov_array):
+    states = list(markov_array[0].keys())
+    inter_number = len(markov_array)
+    avg_matrix={s: {t: 0.0 for t in states} for s in states}
+
+    for matrix in markov_array:
+        for s in states:
+            for t in states:
+                avg_matrix[s][t] += matrix[s][t]
+
+    for s in states:
+        for t in states:
+            avg_matrix[s][t] /= inter_number
+    return avg_matrix
 
         
     
