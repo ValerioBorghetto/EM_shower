@@ -87,7 +87,7 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
         sub_level=[]
         sub_width=[]
         for i in range(n_iter):
-            shower, energy_deposed=generate_shower(depth=40, initial_energy=energy, Z=10, initial_particle="electron")
+            shower, energy_deposed, __=generate_shower(depth=40, initial_energy=energy, Z=10, initial_particle="electron")
             if energy:
                 max_energy = max(energy_deposed)
                 max_level = energy_deposed.index(max_energy)    
