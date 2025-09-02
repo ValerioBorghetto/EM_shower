@@ -29,7 +29,7 @@ def bremss_probab(E0, Z):
 def pairprod_probab(E0, Z):
     return 1 / (1 + np.exp(- (np.log10(E0) - np.log10(3)) * 40)) * (E0 >= 1)
 #Annihilation
-def ann_probab(E0, Z, buffer, old_interactions):
+def ann_probab(E0, Z, buffer, old_interactions): #probability depends on the number of other lepton/antilepton
     return np.clip(len(buffer)/len(old_interactions), 0, 1)
 
 #genera la matrice con le varie probabilità 
@@ -40,7 +40,7 @@ def build_markov(lepton_energy, photon_energy, Z, buffer, old_interactions):
     p_es = 1-p_eb - p_ea   # elettrone → stay_e
     p_pp = pairprod_probab(photon_energy, Z)   # fotone → pair production
     p_ps = 1-p_pp   # fotone → stay_p
-    prob = { 
+    prob = {  #matrice di probabilità di transizione
         'brems': {'brems': p_eb, 'pp': p_pp, 'ann':p_ea, 'stay_e': p_es, 'stay_p':0},
         'pp': {'brems': p_eb, 'pp': 0, 'ann':p_ea, 'stay_e': p_es, 'stay_p':0}, 
         'ann': {'brems': 0, 'pp': p_pp, 'ann':0, 'stay_e': 0, 'stay_p':p_ps},
@@ -60,7 +60,9 @@ def build_draw_markov(energy, tree=True, adj_matrix=True):
             if weight>0:
                 G.add_edge(state_from, state_to, weight=weight)
     if tree:
+        #plt.figure(figsize=(8,5))
         nx.draw(G, with_labels=True)
+        #plt.savefig("../plots/Avg_Markov.pdf")
     if adj_matrix:
         transition_matrix = nx.to_numpy_array(G, nodelist=states)
         plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
@@ -76,6 +78,9 @@ def draw_markov(probability_matrix):
             if weight>0:
                 G.add_edge(state_from, state_to, weight=weight)
     nx.draw(G, with_labels=True)
+    plt.savefig("plots/Markov.pdf")
+    plt.show()
+    plt.close()
     transition_matrix = nx.to_numpy_array(G, nodelist=states)
     plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
     return G
@@ -100,8 +105,8 @@ def generate_interaction(nodes, edges, new_inter, old_inter, state):
     state.append(new_inter)
 
 def photon_decay(nodes, edges, prob, old_inter, state, step, substep, energy):
-    r1 = random.random()
-    if r1 < prob['brems']['pp'] and energy > 2 * me_c2:
+    r1 = random.random() #range 0-1
+    if r1 < prob['brems']['pp'] and energy > 2 * me_c2: #probabilita che si passi da brems a pp
         new_inter = interaction(kind="pp", step=step, substep=substep, charge=+2, energy=energy) 
     else:
         new_inter = interaction(kind="stay_p", step=step, substep=substep, charge=0, energy=energy)
@@ -117,13 +122,14 @@ def positron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, no
         new_kind = "ann"
         new_inter=interaction(kind=new_kind, step=step, substep=substep, charge=0, energy=energy)
         generate_interaction(nodes, edges, new_inter, old_inter, state)
-        number=random.randint(0, len(neg_buffer)-1)
-        other_old=neg_buffer[number]
-        energy_e=0.5*other_old.energy              
-        other_old.energy=other_old.energy-energy_e 
-        new_inter.energy=new_inter.energy+energy_e
+        number=random.randint(0, len(neg_buffer)-1)  #SHOULD BE CHANGE, MORE PROBABILITY FOR SAME SUBSTEP
+        other_old=neg_buffer[number] #prendo un  elettrone a caso x annichilazione
+        energy_e=0.5*other_old.energy #qui: energia elettrone è meta energia di bremmstrahlung
+        other_old.energy=other_old.energy-energy_e #energia dell'elettrone con cui annichila dimezzata 
+        #ridefinisci energia di brems togliendo energia dell'elettrone
+        new_inter.energy=new_inter.energy+energy_e #energia che entra nell'annichilazione è quella del pos e quella dell'elett
         edges.append((other_old.int_name(), new_inter.int_name(), {"charge":new_inter.charge})) 
-        neg_buffer[number].charge=neg_buffer[number].charge-3
+        neg_buffer[number].charge=neg_buffer[number].charge-3 #cosi li elimini
     else:
         new_kind = "stay_e"
         new_inter=interaction(kind=new_kind, step=step, substep=substep, charge=charge, energy=energy)

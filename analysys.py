@@ -44,7 +44,10 @@ def centrality_meas(graph, kind="in_degree", show=True):
             plt.xlabel('Process')
             title=kind + " degree for each process"
             plt.title(title)
+            #plt.savefig("plots/centrality.pdf")
+            plt.savefig(f"plots/centrality_{kind.replace(' ', '_')}.pdf")
             plt.show()
+            plt.close()
     return meas
 
 def plot_kinds(shower): #plot the interaction kind versus the time that process has occurred
@@ -55,7 +58,9 @@ def plot_kinds(shower): #plot the interaction kind versus the time that process 
     plt.ylabel("Occurrence")
     plt.xlabel("Interaction kinds")
     plt.title("Occurrence per interaction kind")
+    plt.savefig("plots/interactions_occurence.pdf")
     plt.show()
+    plt.close()
 
 
 #adjacency matrix plot and study 
@@ -73,7 +78,9 @@ def adj_matrix_study(graph):
     plt.xticks([0, 1, 2])
     plt.xlabel("Degree")
     plt.ylabel("N. nodes with that degree")
+    plt.savefig("plots/degree.pdf")
     plt.show()
+    plt.close()
 
 #plot the width of the shower (the number of interactions per level)
 def plot_width(shower):
@@ -85,6 +92,7 @@ def plot_width(shower):
     plt.ylabel("Number of interactions")
     plt.grid(True)
     plt.tight_layout()
+    plt.savefig("plots/depth.pdf")
     plt.show()
 
 #it studies the width and the energy deposited in different showers
@@ -142,7 +150,9 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
     ax2.grid(True)
 
     plt.tight_layout()
+    plt.savefig("plots/depth_vs_energy.pdf")
     plt.show()
+    plt.close()
     
 #It counts the different interaction kinds over the different shower levels
 def level_count(shower):

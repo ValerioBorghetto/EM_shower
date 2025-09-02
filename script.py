@@ -13,6 +13,9 @@ depth=40            #Maximum depth of the material
 material_Z=40       #work in progress
 ####################
 
+#markov chain: nodo=stato, link= transizione possibile tra stati. ad ogni stato è associata una probabilità di transizione 
+
+
 start=time.time()
 #generate the shower
 shower, energy_deposed, markov_array=generate_shower(depth=depth, initial_energy=initial_energy, Z=material_Z, initial_particle="electron") #30--->2 seconds

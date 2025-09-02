@@ -11,8 +11,11 @@ def plot_adjacency_matrix(adj_matrix, title="Adjacency Matrix", labels=[]):
     # Imposta le etichette per righe e colonne
     plt.xticks(np.arange(len(labels)), labels, rotation=90)  # Etichette per le colonne
     plt.yticks(np.arange(len(labels)), labels)               # Etichette per le righe
-    plt.show()
 
+    filename = f"plots/{title.replace(' ', '_')}.pdf" 
+    plt.savefig(filename) #Adiacency matrix
+    plt.show()
+    plt.close()
 
 def plot_shower(shower, tree=False, color=False):
     # Setup posizione dei nodi
@@ -55,8 +58,12 @@ def plot_shower(shower, tree=False, color=False):
         plt.legend(title="Kind")
         plt.title("Legenda tipi di interazione")
         plt.axis('off')
+        plt.savefig("plots/shower.pdf")
         plt.show()
-    plt.show()
+        plt.close()
+
+    else:
+        plt.savefig("plots/shower2.pdf")
 
 
 def plot_energy(energy_deposed):
@@ -68,7 +75,10 @@ def plot_energy(energy_deposed):
     plt.ylabel('Energy (MeV)')
     plt.grid(True)
     plt.tight_layout()
+    plt.savefig("plots/Energy_deposited.pdf")
     plt.show()
+    plt.close()
+
 
 #is symmetric?
 def is_symmetric(A):
