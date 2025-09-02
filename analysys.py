@@ -34,6 +34,7 @@ def centrality_meas(graph, kind="in_degree", show=True):
             plt.ylabel("Random Walk Centrality")
             plt.title("Random Walk Centrality by Node Pair")
             plt.tight_layout()
+            plt.savefig(f"plots/centrality_{kind.replace(' ', '_')}.pdf")
             plt.show()
         else:
             labels = list(meas.keys())
@@ -166,7 +167,9 @@ def level_count(shower):
     plt.ylabel("Counts")
     plt.legend(title="Interaction kind")
     plt.grid(True)
+    plt.savefig("plots/interaction_vs_depth.pdf")
     plt.show()
+    plt.close()
     
 def average_markov(markov_array):
     states = list(markov_array[0].keys())
