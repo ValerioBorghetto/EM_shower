@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 #plot adj. matrix
-def plot_adjacency_matrix(adj_matrix, title="Adjacency Matrix", labels=[]): 
+def plot_adjacency_matrix(adj_matrix, title="Adjacency matrix", labels=[]): 
     plt.figure(figsize=(6,6))
     plt.imshow(adj_matrix, cmap='gray_r', interpolation='none')
     plt.title(title)
@@ -11,8 +11,11 @@ def plot_adjacency_matrix(adj_matrix, title="Adjacency Matrix", labels=[]):
     # Imposta le etichette per righe e colonne
     plt.xticks(np.arange(len(labels)), labels, rotation=90)  # Etichette per le colonne
     plt.yticks(np.arange(len(labels)), labels)               # Etichette per le righe
-    plt.savefig(f"plots/{title}.pdf") #Adiacency matrix
 
+    filename = f"plots/{title.replace(' ', '_')}.pdf" 
+    plt.savefig(filename) #Adiacency matrix
+    plt.show()
+    plt.close()
 
 def plot_shower(shower, tree=False, color=False):
     # Setup posizione dei nodi
@@ -56,6 +59,8 @@ def plot_shower(shower, tree=False, color=False):
         plt.title("Legenda tipi di interazione")
         plt.axis('off')
         plt.savefig("plots/shower.pdf")
+        plt.show()
+        plt.close()
 
     else:
         plt.savefig("plots/shower2.pdf")
@@ -70,7 +75,9 @@ def plot_energy(energy_deposed):
     plt.ylabel('Energy (MeV)')
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("plots/energy.pdf")
+    plt.savefig("plots/Energy_deposited.pdf")
+    plt.show()
+    plt.close()
 
 
 #is symmetric?
@@ -80,5 +87,3 @@ def is_symmetric(A):
 #is upper triangular
 def is_upper_triangular(adj_matrix):
     return np.allclose(adj_matrix, np.triu(adj_matrix))
-
-

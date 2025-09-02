@@ -53,6 +53,7 @@ shower_study(10, 1000, 10, energy=True, width=True)
 
 #fa la media di tutte le markov della shower, e ne studia le misure di centralità
 avg_matrix=average_markov(markov_array)
+#avg_graph=build_draw_markov(avg_matrix)
 avg_graph=draw_markov(avg_matrix)
 measures=["eigenvector", "betweenness", "in_degree", "out_degree", "flow betweenness"]
 for m in measures:

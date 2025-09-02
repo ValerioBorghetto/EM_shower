@@ -24,11 +24,7 @@ class interaction():
 #Probabilities of interactions
 #Bremsstralhung
 def bremss_probab(E0, Z): #E0 è l'energia iniziale
-    if E0 == 0:
-        print("Warning: E0=0 in bremss_probab")
-        return 1e-10  # Evita log(0)
-
-    else:
+   
         return 0.98 / (1 + np.exp(- (np.log10(E0) - np.log10(3)) * 40)) * (E0 >= 1)
 #Pair production
 def pairprod_probab(E0, Z):
@@ -54,7 +50,7 @@ def build_markov(lepton_energy, photon_energy, Z, buffer, old_interactions):
     }
     return prob
 
-def draw_markov(energy, tree=True, adj_matrix=True):
+def build_draw_markov(energy, tree=True, adj_matrix=True):
     prob=build_markov(energy, energy, 0, ["stay_e", "stay_p", "bremss", "pp"], ["stay_e", "stay_p", "bremss", "pp", "pp", "stay_p", "stay_e", "brems"]) #da moodificare!!! INventa
     states = ['brems', 'pp', 'ann', 'stay_e', 'stay_p']
     G = nx.DiGraph()
@@ -65,12 +61,29 @@ def draw_markov(energy, tree=True, adj_matrix=True):
             if weight>0:
                 G.add_edge(state_from, state_to, weight=weight)
     if tree:
-        plt.figure(figsize=(8,5))
+        #plt.figure(figsize=(8,5))
         nx.draw(G, with_labels=True)
-        plt.savefig("../plots/Markov.pdf")
+        #plt.savefig("../plots/Avg_Markov.pdf")
     if adj_matrix:
         transition_matrix = nx.to_numpy_array(G, nodelist=states)
         plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
+    return G
+
+def draw_markov(probability_matrix):
+    states = ['brems', 'pp', 'ann', 'stay_e', 'stay_p']
+    G = nx.DiGraph()
+    G.add_nodes_from(states)
+    for state_from in states:
+        for state_to in states:
+            weight = probability_matrix[state_from].get(state_to, 0) #se non lo trova da 0
+            if weight>0:
+                G.add_edge(state_from, state_to, weight=weight)
+    nx.draw(G, with_labels=True)
+    plt.savefig("plots/Markov.pdf")
+    plt.show()
+    plt.close()
+    transition_matrix = nx.to_numpy_array(G, nodelist=states)
+    plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
     return G
         
 
@@ -93,7 +106,7 @@ def generate_interaction(nodes, edges, new_inter, old_inter, state):
     state.append(new_inter)
 
 def photon_decay(nodes, edges, prob, old_inter, state, step, substep, energy):
-    r1 = random.random() #0-1
+    r1 = random.random() #range 0-1
     if r1 < prob['brems']['pp'] and energy > 2 * me_c2: #probabilita che si passi da brems a pp
         new_inter = interaction(kind="pp", step=step, substep=substep, charge=+2, energy=energy) 
     else:
@@ -124,6 +137,7 @@ def positron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, no
         generate_interaction(nodes, edges, new_inter, old_inter, state) 
     if old_inter in pos_buffer:
         pos_buffer.remove(old_inter)
+    #pos_buffer.remove(old_inter)
 
 def electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep, state, charge, energy):
     r2 = random.random()
@@ -185,6 +199,4 @@ def energy_division(total_energy, Z, interactions, buffer, daughters):
     if daughters=="stay_p":
         prob=build_markov(0, total_energy, Z, buffer, interactions)
         return prob, total_energy
-    
-
-
+ 

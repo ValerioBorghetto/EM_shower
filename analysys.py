@@ -29,8 +29,10 @@ def centrality_meas(graph, kind="in_degree", show=True):
         plt.xlabel('Process')
         title=kind + " degree for each process"
         plt.title(title)
-        plt.savefig("plots/centrality.pdf")
-        #plt.show()
+        #plt.savefig("plots/centrality.pdf")
+        plt.savefig(f"plots/centrality_{kind.replace(' ', '_')}.pdf")
+        plt.show()
+        plt.close()
     return meas
 
 def plot_kinds(shower): #plot the interaction kind versus the time that process has occurred
@@ -41,7 +43,9 @@ def plot_kinds(shower): #plot the interaction kind versus the time that process 
     plt.ylabel("Occurrence")
     plt.xlabel("Interaction kinds")
     plt.title("Occurrence per interaction kind")
-    plt.savefig("plots/kinds.pdf")
+    plt.savefig("plots/interactions_occurence.pdf")
+    plt.show()
+    plt.close()
 
 
 #adjacency matrix plot and study 
@@ -52,14 +56,16 @@ def adj_matrix_study(graph):
     plot_adjacency_matrix(adjacency)
     #get and plot incidence matrix
     inc = nx.incidence_matrix(graph, oriented=True).toarray()
-    plot_adjacency_matrix(inc, title="Incidence Matrix", labels=[])
+    plot_adjacency_matrix(inc, title="Incidence matrix", labels=[])
     #plot how many nodes with that degree level
     in_degree = np.sum(adjacency, axis=0) #it sums for each coloumn over all the raws
     plt.hist(in_degree, bins=[-0.5, 0.5, 1.5, 2.5], rwidth=0.8,edgecolor='black')
     plt.xticks([0, 1, 2])
     plt.xlabel("Degree")
     plt.ylabel("N. nodes with that degree")
-    plt.savefig("plots/matrix_study.pdf")
+    plt.savefig("plots/degree.pdf")
+    plt.show()
+    plt.close()
 
 #plot the width of the shower (the number of interactions per level)
 def plot_width(shower):
@@ -71,8 +77,10 @@ def plot_width(shower):
     plt.ylabel("Number of interactions")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("plots/width.pdf")
-    #plt.show()
+    plt.savefig("plots/depth.pdf")
+    plt.show()
+    plt.close()
+   
 
 
 def shower_study(initial_energy, final_energy, times, energy=True, width=True):
@@ -129,8 +137,9 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
     ax2.grid(True)
 
     plt.tight_layout()
-    #plt.show()
-    plt.savefig("plots/shower_study.pdf")
+    plt.savefig("plots/depth_vs_energy.pdf")
+    plt.show()
+    plt.close()
     
 #Computes the average Markov transition matrix from a list of Markov matrices.    
 def average_markov(markov_array):  #markov_array (list of dict), A list where each element is a Markov transition matrix
@@ -147,8 +156,3 @@ def average_markov(markov_array):  #markov_array (list of dict), A list where ea
         for t in states:
             avg_matrix[s][t] /= inter_number
     return avg_matrix #this is a dict of dict
-
-        
-    
-
-
