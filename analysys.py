@@ -4,6 +4,7 @@ import numpy as np
 from network_utils import*
 from build_shower.em_shower import*
 from tqdm import tqdm
+import pandas as pd
 
 #centrality measures
 def centrality_meas(graph, kind="in_degree", show=True):
@@ -18,18 +19,32 @@ def centrality_meas(graph, kind="in_degree", show=True):
     if kind=="flow betweenness":
         undirect = graph.to_undirected()
         meas = nx.current_flow_betweenness_centrality(undirect, normalized=True)
+    if kind=="random walk": #shows the degree of importance of the connections (e.g. brems-pp = 0.03 implies low importance, i.e. unlikely that brems produces pp in a few passages)
+        graph=graph.to_undirected()
+        meas=nx.edge_current_flow_betweenness_centrality(graph, weight='weight')
     if show:
         print("Measure of ", kind, "centrality :", meas)
         # Plot
-        labels = list(meas.keys())
-        values = list(meas.values())
-        plt.figure(figsize=(8,5))
-        plt.bar(labels, values, color='skyblue')
-        plt.ylabel('Degree')
-        plt.xlabel('Process')
-        title=kind + " degree for each process"
-        plt.title(title)
-        plt.show()
+        if kind == "random walk":
+            labels = [f"{a}-{b}" for a, b in meas.keys()]
+            values = list(meas.values())
+            plt.figure(figsize=(10, 6))
+            plt.bar(labels, values)
+            plt.xticks(rotation=45, ha="right")
+            plt.ylabel("Random Walk Centrality")
+            plt.title("Random Walk Centrality by Node Pair")
+            plt.tight_layout()
+            plt.show()
+        else:
+            labels = list(meas.keys())
+            values = list(meas.values())
+            plt.figure(figsize=(8,5))
+            plt.bar(labels, values, color='skyblue')
+            plt.ylabel('Degree')
+            plt.xlabel('Process')
+            title=kind + " degree for each process"
+            plt.title(title)
+            plt.show()
     return meas
 
 def plot_kinds(shower): #plot the interaction kind versus the time that process has occurred
@@ -72,7 +87,7 @@ def plot_width(shower):
     plt.tight_layout()
     plt.show()
 
-
+#it studies the width and the energy deposited in different showers
 def shower_study(initial_energy, final_energy, times, energy=True, width=True):
     step=(final_energy-initial_energy)/times
     energy=initial_energy
@@ -112,14 +127,14 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
     
     #Plot
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))  
-    # Primo grafico
+    # First
     ax1.errorbar(energy_array, levels_array, yerr=err_levels_array, fmt='o-', capsize=5, label='Level')
     ax1.set_title("Maximum energy depth vs Initial energy")
     ax1.set_xlabel("Initial energy")
     ax1.set_ylabel("Depth with max. energy deposit")
     ax1.grid(True)
 
-    # Secondo grafico
+    # Second
     ax2.errorbar(energy_array, width_array, yerr=err_width_array, fmt='s--', capsize=5, color='orange', label='Level')
     ax2.set_title("Maximum interaction depth vs Initial energy")
     ax2.set_xlabel("Initial Energy")
@@ -129,6 +144,19 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
     plt.tight_layout()
     plt.show()
     
+#It counts the different interaction kinds over the different shower levels
+def level_count(shower):
+    steps = list(nx.get_node_attributes(shower, "step").values())
+    kinds = list(nx.get_node_attributes(shower, "kind").values())
+    df = pd.DataFrame({'level': steps, 'interaction': kinds})
+    tabella = pd.crosstab(df['level'], df['interaction'])
+    tabella.plot(kind='line', figsize=(12, 6), marker='o')
+    plt.title("Number of different interactions over shower depth")
+    plt.xlabel("Depth")
+    plt.ylabel("Counts")
+    plt.legend(title="Interaction kind")
+    plt.grid(True)
+    plt.show()
     
 def average_markov(markov_array):
     states = list(markov_array[0].keys())

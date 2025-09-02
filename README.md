@@ -2,7 +2,7 @@
 This repository contains a model to build and study electromagnetic showers using complex network theory. 
 
 # Logic of the Cascade Creation
-The model i based on 5 possible interactions:
+The model is based on 5 possible interactions:
 - Bremsstralhung
 - Annihilation
 - Stay an electron (or positron)
@@ -35,4 +35,5 @@ To run this project, simply execute the `script.py` file. You then need the foll
     pip install pygraphviz
     ```
 - [tqdm](https://github.com/tqdm/tqdm)
+- [Pandas](https://pandas.pydata.org/)
 
