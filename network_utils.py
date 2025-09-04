@@ -17,7 +17,7 @@ def plot_adjacency_matrix(adj_matrix, title="Adjacency Matrix", labels=[]):
     plt.show()
     plt.close()
 
-def plot_shower(shower, tree=False, color=False):
+def plot_shower(shower, tree=False, color=False, size=80):
     # Setup posizione dei nodi
     pos = nx.nx_agraph.graphviz_layout(shower, prog='dot') if tree else nx.spring_layout(shower)
 
@@ -44,7 +44,7 @@ def plot_shower(shower, tree=False, color=False):
         with_labels=False,
         node_color=node_colors,
         edge_color="gray",
-        node_size=80,
+        node_size=size,
         font_size=8,
         arrows=True
     )
