@@ -19,7 +19,7 @@ material_Z=40       #work in progress
 start=time.time()
 #generate the shower
 shower, energy_deposed, markov_array=generate_shower(depth=depth, initial_energy=initial_energy, Z=material_Z, initial_particle="electron") #30--->2 seconds
-"""
+
 #execution time
 end_time = time.time()
 execution_time = end_time - start
@@ -44,7 +44,7 @@ level_count(shower)
 
 #study the mean values over different initial energy values
 shower_study(10, 1000, 10, energy=True, width=True)
-"""
+""" """
 #markov analysis
 #fa la media di tutte le markov della shower, e ne studia le misure di centralità
 avg_matrix=average_markov(markov_array)

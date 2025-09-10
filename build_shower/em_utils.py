@@ -68,7 +68,7 @@ def build_draw_markov(energy, tree=True, adj_matrix=True):
         plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
     return G
 
-def draw_markov(probability_matrix):
+"""def draw_markov(probability_matrix):
     states = ['brems', 'pp', 'ann', 'stay_e', 'stay_p']
     G = nx.DiGraph()
     G.add_nodes_from(states)
@@ -83,8 +83,56 @@ def draw_markov(probability_matrix):
     plt.close()
     transition_matrix = nx.to_numpy_array(G, nodelist=states)
     plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
+    return G"""
+
+def draw_markov(probability_matrix):
+    states = ['brems', 'pp', 'ann', 'stay_e', 'stay_p']
+    color_map = { 
+        "brems": "#FF0000",    # rosso  
+        "ann":   "#FFA500",    # arancione
+        "stay_e":"#FFD700",    # giallo
+        "pp":    "#00008B",    # blu scuro
+        "stay_p": "#87CEEB",    # azzurro
+
+    }
+    G = nx.DiGraph()
+    G.add_nodes_from(states)
+    for state_from in states:  # Aggiunta degli archi con peso
+        for state_to in states:
+            weight = probability_matrix[state_from].get(state_to, 0) #se non lo trova da 0
+            if weight > 0:
+                G.add_edge(state_from, state_to, weight=weight)
+    pos = nx.spring_layout(G, seed=42) # Layout per posizionare i nodi
+    node_colors = [color_map[n] for n in G.nodes()] # Preparazione colori e dimensioni nodi
+    node_sizes = [2000 for _ in G.nodes()] 
+    edge_weights = [G[u][v]['weight']*5 for u,v in G.edges()] # Spessore archi proporzionale al peso
+   
+    nx.draw(G, pos,
+            with_labels=True,
+            node_color=node_colors,
+            node_size=node_sizes,
+            width=edge_weights,
+            arrowstyle='-|>',
+            arrowsize=20,
+            font_size=12,
+            font_weight='bold')
+    
+    edge_labels = {(u, v): f"{d['weight']:.2f}" for u, v, d in G.edges(data=True)} # Aggiunta dei pesi come etichette sugli archi
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red', font_size=10)
+    plt.savefig("plots/Markov.pdf")
+    plt.show()
+    plt.close()
+    
+    # Creazione della matrice di transizione per eventuale plot
+    transition_matrix = nx.to_numpy_array(G, nodelist=states)
+    
+    # Se hai una funzione plot_adjacency_matrix, la richiami
+    try:
+        plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
+    except NameError:
+        print("plot_adjacency_matrix non definita. Grafico principale creato con successo.")
+    
     return G
-        
 
 def create_buffer(old_interactions, pos_buffer, neg_buffer): #crea i due buffer, ovvero gli array contenti tutti gli elettroni (o positroni) liberi
     for old_inter in old_interactions:

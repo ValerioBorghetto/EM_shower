@@ -23,11 +23,11 @@ def plot_shower(shower, tree=False, color=False, size=80):
 
     # Mappa colori per tipi di kind
     color_map = {
-        "brems": "#87CEEB",            # azzurro
-        "pp":    "#00008B",            # blu scuro
-        "ann":   "#FFD700",            # giallo
-        "stay_e":"#FFA500",            # arancione
-        "stay_p":"#FFA500"             # arancione
+        "brems": "#FF0000",    # rosso  
+        "ann":   "#FFA500",    # arancione
+        "stay_e":"#FFD700",    # giallo
+        "pp":    "#00008B",    # blu scuro
+        "stay_p": "#87CEEB",    # azzurro
     }
 
     # Colori per i nodi se richiesto
