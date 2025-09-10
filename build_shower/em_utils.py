@@ -2,6 +2,7 @@ import networkx as nx
 import random
 import numpy as np
 from network_utils import *
+import matplotlib.patches as mpatches
 
 ####Physical constants########
 me_c2=0.511 #MeV
@@ -91,7 +92,7 @@ def draw_markov(probability_matrix):
         "brems": "#FF0000",    # rosso  
         "ann":   "#FFA500",    # arancione
         "stay_e":"#FFD700",    # giallo
-        "pp":    "#00008B",    # blu scuro
+        "pp":    "#003FAB",    # blu scuro
         "stay_p": "#87CEEB",    # azzurro
 
     }
@@ -119,6 +120,16 @@ def draw_markov(probability_matrix):
     
     edge_labels = {(u, v): f"{d['weight']:.2f}" for u, v, d in G.edges(data=True)} # Aggiunta dei pesi come etichette sugli archi
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red', font_size=10)
+
+    readable_names = {
+        "brems": "Bremsstrahlung",
+        "pp": "Pair Production",
+        "ann": "Annihilation",
+        "stay_e": "No e interaction",
+        "stay_p": "No p interaction"
+    }
+    patches = [mpatches.Patch(color=color_map[state], label=readable_names[state]) for state in states]
+    plt.legend(handles=patches, title="Interaction")
     plt.savefig("plots/Markov.pdf")
     plt.show()
     plt.close()
