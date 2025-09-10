@@ -1,6 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.patches as mpatches
 
 #plot adj. matrix
 def plot_adjacency_matrix(adj_matrix, title="Adjacency Matrix", labels=[]): 
@@ -26,7 +27,7 @@ def plot_shower(shower, tree=False, color=False, size=80):
         "brems": "#FF0000",    # rosso  
         "ann":   "#FFA500",    # arancione
         "stay_e":"#FFD700",    # giallo
-        "pp":    "#00008B",    # blu scuro
+        "pp":    "#003FAB",    # blu scuro
         "stay_p": "#87CEEB",    # azzurro
     }
 
@@ -52,10 +53,17 @@ def plot_shower(shower, tree=False, color=False, size=80):
     plt.axis('off')
     plt.tight_layout()
     # Legenda se color è attivo
+    readable_names = {
+        "brems": "Bremsstrahlung",
+        "pp": "Pair Production",
+        "ann": "Annihilation",
+        "stay_e": "No e interaction",
+        "stay_p": "No p interaction"
+    }
     if color:
-        for kind, color_val in color_map.items():
-            plt.plot([], [], marker="o", color=color_val, label=kind, linestyle="None")
-        plt.legend(title="Kind")
+        kinds_present = set(nx.get_node_attributes(shower, "kind").values())
+        patches = [mpatches.Patch(color=color_map[k], label=readable_names[k]) for k in kinds_present]
+        plt.legend(handles=patches, title="Interaction")
         plt.title("Legenda tipi di interazione")
         plt.axis('off')
         plt.savefig("plots/shower.pdf")

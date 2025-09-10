@@ -5,6 +5,7 @@ from network_utils import*
 from build_shower.em_shower import*
 from tqdm import tqdm
 import pandas as pd
+import matplotlib.patches as mpatches
 
 def plot_kinds(shower): #plot the interaction kind versus the time that process has occurred
     kinds = list(nx.get_node_attributes(shower, "kind").values())
@@ -55,11 +56,29 @@ def level_count(shower):
     kinds = list(nx.get_node_attributes(shower, "kind").values())
     df = pd.DataFrame({'level': steps, 'interaction': kinds})
     tabella = pd.crosstab(df['level'], df['interaction'])
-    tabella.plot(kind='line', figsize=(12, 6), marker='o')
+
+    color_map = {
+        "brems": "#FF0000",    # rosso  
+        "ann":   "#FFA500",    # arancione
+        "stay_e":"#FFD700",    # giallo
+        "pp":    "#003FAB",    # blu scuro
+        "stay_p": "#87CEEB",    # azzurro
+    }
+    colors = [color_map.get(col, "#000000") for col in tabella.columns]
+    tabella.plot(kind='line', figsize=(12, 6), marker='o', color=colors)
     plt.title("Number of different interactions over shower depth")
     plt.xlabel("Depth")
     plt.ylabel("Counts")
-    plt.legend(title="Interaction kind")
+
+    readable_names = {
+        "brems": "Bremsstrahlung",
+        "pp": "Pair Production",
+        "ann": "Annihilation",
+        "stay_e": "No e interaction",
+        "stay_p": "No p interaction"
+    }
+    patches = [mpatches.Patch(color=color_map[col], label=readable_names[col]) for col in tabella.columns]
+    plt.legend(handles=patches, title="Interaction")
     plt.grid(True)
     plt.savefig("plots/interaction_vs_depth.pdf")
     plt.show()
