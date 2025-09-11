@@ -69,22 +69,6 @@ def build_draw_markov(energy, tree=True, adj_matrix=True):
         plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
     return G
 
-"""def draw_markov(probability_matrix):
-    states = ['brems', 'pp', 'ann', 'stay_e', 'stay_p']
-    G = nx.DiGraph()
-    G.add_nodes_from(states)
-    for state_from in states:
-        for state_to in states:
-            weight = probability_matrix[state_from].get(state_to, 0) #se non lo trova da 0
-            if weight>0:
-                G.add_edge(state_from, state_to, weight=weight)
-    nx.draw(G, with_labels=True)
-    plt.savefig("plots/Markov.pdf")
-    plt.show()
-    plt.close()
-    transition_matrix = nx.to_numpy_array(G, nodelist=states)
-    plot_adjacency_matrix(adj_matrix=transition_matrix, title="Transition matrix", labels=states)
-    return G"""
 
 def draw_markov(probability_matrix):
     states = ['brems', 'pp', 'ann', 'stay_e', 'stay_p']
