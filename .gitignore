@@ -11,3 +11,6 @@ EM_shower/
 # File di configurazione locali
 *.log
 
+#pdf
+*.pdf
+
