@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 import time
 
 ###settings###########
-initial_energy=300  #(MeV), >10 for relativistic limit
+initial_energy=3000  #(MeV), >10 for relativistic limit
 depth=40            #Maximum depth of the material
 material_Z=40       #work in progress
 ####################
 
 #markov chain: nodo=stato, link= transizione possibile tra stati. ad ogni stato è associata una probabilità di transizione 
-
+"""
 start=time.time()
 #generate the shower
 shower, energy_deposed, markov_array=generate_shower(depth=depth, initial_energy=initial_energy, Z=material_Z, initial_particle="electron") #30--->2 seconds
@@ -44,10 +44,12 @@ level_count(shower)
 
 #study the mean values over different initial energy values
 shower_study(10, 1000, 10, energy=True, width=True)
-""" """
+
 #markov analysis
 #fa la media di tutte le markov della shower, e ne studia le misure di centralità
 avg_matrix=average_markov(markov_array)
+print(avg_matrix)
+
 avg_graph=draw_markov(avg_matrix)
 measures=["random walk", "eigenvector", "betweenness", "in_degree", "out_degree", "flow betweenness"]
 for m in measures:
@@ -55,4 +57,6 @@ for m in measures:
 
 #study_properties(10, 1000, 10)
 
-#network_degree(300)
+#network_degree(300)"""
+
+interaction_show()
