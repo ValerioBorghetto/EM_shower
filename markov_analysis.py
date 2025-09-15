@@ -67,72 +67,87 @@ def average_markov(markov_array):
     return avg_matrix
 
 def interaction_show():
+    states = ['brems', 'pp', 'ann', 'stay_e', 'stay_p']
+
     G = nx.DiGraph()
+    #G.add_nodes_from(states)
     G.add_edges_from([
-    ("L0", "L1"), ("L0", "L2"), ("L3", "L0"),
-    ("R0", "R1"), ("R0", "R2"), ("R3", "R0"), ("R4", "R0"),
-    ("C0", "C1"), ("C2", "C0"),
-    ("P0", "P1"), ("P0", "P2"), ("P3", "P0"),
-    ("D0", "D1"), ("D2", "D0")
+    ("brems", "brems1"), ("brems", "brems2"), ("brems3", "brems"),
+    ("ann", "ann1"), ("ann", "ann2"), ("ann3", "ann"), ("ann4", "ann"),
+    ("stay_e", "stay_e1"), ("stay_e2", "stay_e"),
+    ("pp", "pp1"), ("pp", "pp2"), ("pp3", "pp"),
+    ("stay_p", "stay_p1"), ("stay_p2", "stay_p")
     ])
 
-
-    # Posizioni: prima L, poi R, poi C, poi P, poi D
     pos = {
-    # L group
-    "L0": (-4, 0), "L1": (-5, -1), "L2": (-3, -1), "L3": (-4, 1),
-    # R group
-    "R0": (-2, 0), "R1": (-3, -1), "R2": (-1, -1), "R3": (-3, 1), "R4": (-1, 1),
-    # C group
-    "C0": (0, 0), "C1": (0, -1), "C2": (0, 1),
-    # P group
-    "P0": (2, 0), "P1": (1, -1), "P2": (3, -1), "P3": (2, 1),
-    # D group
-    "D0": (4, 0), "D1": (4, -1), "D2": (4, 1)
+    "brems": (-2, 0), "ann": (-1, 0), "stay_e": (0, 0), "pp": (1, 0), "stay_p": (2, 0),
+    "brems1": (-2.5, -1), "brems2": (-1.5, -1), "brems3": (-2, 1),
+    "ann1": (-1.5, -1), "ann2": (-0.5, -1), "ann3": (-1.5, 1), "ann4": (-0.5, 1),
+    "stay_e1": (0, -1), "stay_e2": (0, 1),
+    "pp1": (0.5, -1), "pp2": (1.5, -1), "pp3": (1, 1),
+    "stay_p1": (2, -1), "stay_p2": (2, 1)
+}
+
+    # Colori personalizzati con questo DIZIONARIO
+    color_map = {
+        "brems": "#FF0000",    # rosso  
+        "ann":   "#FFA500",    # arancione
+        "stay_e":"#FFD700",    # giallo
+        "pp":    "#003FAB",    # blu scuro
+        "stay_p": "#87CEEB",    # azzurro
     }
+    #node_colors = [color_map.get(n, "white") for n in states] #colori come vettore
+    node_colors = [color_map[n] for n in states]
 
-
-    # Colori personalizzati
-    node_colors = []
-    for n in G.nodes():
-        if n == "L0":
-            node_colors.append("#FF0000") # rosso
-        elif n == "C0":
-            node_colors.append("#FFD700") # oro
-        elif n == "R0":
-            node_colors.append("#FFA500") # arancione
-        elif n == "P0":
-            node_colors.append("#003FAB") # blu scuro
-        elif n == "D0":
-            node_colors.append("#87CEEB") # azzurro
-        else:
-            node_colors.append("white")
-
-    labels = {
-    "L0": "Brems",
-    "C0": "Stay_e",
-    "R0": "Ann",
-    "P0": "pp",
-    "D0": "Stay_p"
-    }
     # Disegno del grafo con frecce orientate verso i nodi più bassi
     plt.figure(figsize=(10,5))
-    nx.draw(
-    G, pos,
-    with_labels=False,
+   
+    # Disegna solo nodi principali
+    nx.draw_networkx_nodes(G, pos, nodelist=states, node_size=1500, node_color=node_colors)
+
+    # Etichette solo nodi principali
+    nx.draw_networkx_labels(G, pos, labels={n: n for n in states}, font_size=12, font_color="black")
+
+    # Disegna solo archi tra nodi principali e secondari (gli archi restano, i nodi secondari no)
+    nx.draw_networkx_edges(G, pos, arrows=True, edge_color="#555555", width=2, arrowsize=20, connectionstyle="arc3,rad=0.0")
+    plt.tight_layout() #adatta alla canvas
+
+    readable_names = {
+        "brems": "Bremsstrahlung",
+        "pp": "Pair Production",
+        "ann": "Annihilation",
+        "stay_e": "No e interaction",
+        "stay_p": "No p interaction"
+    }
+    patches = [mpatches.Patch(color=color_map[state], label=readable_names[state]) for state in color_map]
+
+    plt.legend(handles=patches, title="Interaction", loc  = 'upper left', bbox_to_anchor=(0, 1))
+    plt.axis("off") #rimuove assi x, y e la cornice
+    plt.savefig("plots/Interactions.pdf")
+    plt.show()
+    plt.close()
+
+
+"""nx.draw(
+    G, pos, nodelist = states,
+    with_labels=True,
     node_size=1500,
     node_color=node_colors,
-    font_size=10,
+    font_size=12,
     font_color="black",
-    edge_color="#555555",
+    #font_weight="bold",
+    edge_color="#555555",  
     width=2,
     arrows=True,
     arrowsize=20,
     connectionstyle="arc3,rad=0.0"
     )
-    nx.draw_networkx_labels(G, pos, labels, font_size=12, font_color="black")
-    plt.savefig("plots/Interactions.pdf")
-    plt.axis("off")
-    plt.show()
-    plt.close()
-
+    pos = { #necessario definire posizioni anche dei secondari altrimenti non posso disegnare gli edges
+    "brems": (-4, 0), "ann": (-2, 0), "stay_e": (0, 0), "pp": (2, 0), "stay_p": (4, 0),
+    "brems1": (-5, -0.5), "brems2": (-3, -0.5), "brems3": (-4, 0.5),
+    "ann1": (-3, -0.5), "ann2": (-1, -0.5), "ann3": (-3, 0.5), "ann4": (-1, 0.5),
+    "stay_e1": (0, -0.5), "stay_e2": (0, 0.5),
+    "pp1": (1, -0.5), "pp2": (3, -0.5), "pp3": (2, 0.5),
+    "stay_p1": (4, -0.5), "stay_p2": (4, 0.5)
+}
+    """
