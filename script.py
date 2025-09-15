@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 import time
 
 ###settings###########
-initial_energy=2000  #(MeV), >10 for relativistic limit
+initial_energy=200  #(MeV), >10 for relativistic limit
 depth=40            #Maximum depth of the material
 material_Z=40       #work in progress
 ####################
 
 #markov chain: nodo=stato, link= transizione possibile tra stati. ad ogni stato è associata una probabilità di transizione 
-"""
+
 start=time.time()
 #generate the shower
 shower, energy_deposed, markov_array=generate_shower(depth=depth, initial_energy=initial_energy, Z=material_Z, initial_particle="electron") #30--->2 seconds
@@ -26,16 +26,16 @@ execution_time = end_time - start
 print(f"Execution time: {execution_time} seconds")
 
 #plot the shower
-plot_shower(shower, tree=True, color=True) #tree decide se vuoi la raffigurazione ad albero, color se vuoi gli edges colorati
-
-#study of the adjacency matrix of the shower
-adj_matrix_study(shower)
+#plot_shower(shower, tree=True, color=True) #tree decide se vuoi la raffigurazione ad albero, color se vuoi gli edges colorati
+"""
+#study of the adjacency matrix 
+#adj_matrix_study(300, 50)
 
 #study of the shower properties
 #plot deposited energy
 plot_energy(energy_deposed)
 #plot different interaction kinds occurrence
-plot_kinds(shower)
+plot_kinds(300, 50)
 #plot the width of the shower 
 plot_width(shower)
 #plot the occurrence of each interaction per shower level
@@ -55,8 +55,11 @@ measures=["random walk", "eigenvector", "betweenness", "in_degree", "out_degree"
 for m in measures:
     meas=centrality_meas(avg_graph, kind=m)
 
-#study_properties(10, 1000, 10)
-
-#network_degree(300)"""
+study_properties(10, 1000, 10)
 
 interaction_show()
+
+network_degree(300)
+"""
+
+network_degree(300)

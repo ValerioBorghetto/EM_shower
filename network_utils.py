@@ -73,19 +73,39 @@ def plot_shower(shower, tree=False, color=False, size=80):
     else:
         plt.savefig("plots/shower2.pdf")
 
-
 def plot_energy(energy_deposed):
-    x = list(range(len(energy_deposed)))
-    plt.figure(figsize=(10, 5))
-    plt.plot(x, energy_deposed, marker='o', linestyle='-', color='b')
-    plt.title('Energy deposed plot')
-    plt.xlabel('X0')
-    plt.ylabel('Energy (MeV)')
-    plt.grid(True)
+    x = np.arange(len(energy_deposed))
+
+    # --- Preparazione figura ---
+    fig, ax = plt.subplots(figsize=(7, 5))
+
+    # linea più chiara sotto
+    ax.plot(
+        x, energy_deposed, "--",
+        color="firebrick", linewidth=2, zorder=1
+    )
+
+    # punti con evidenza sopra
+    ax.plot(
+        x, energy_deposed, "D",
+        color="darkred", markersize=5,
+        label="Deposited Energy", zorder=2
+    )
+
+    # --- Stile e testi ---
+    ax.set_title("Energy Deposited per X₀", fontsize=18, weight="bold")
+    ax.set_xlabel("X₀", fontsize=14)
+    ax.set_ylabel("Energy (MeV)", fontsize=14)
+    ax.grid(True, linestyle="--", alpha=0.6)
+    ax.legend()
+
+    # --- Stile globale coerente ---
     plt.tight_layout()
     plt.savefig("plots/Energy_deposited.pdf")
     plt.show()
     plt.close()
+
+
 
 
 #is symmetric?
