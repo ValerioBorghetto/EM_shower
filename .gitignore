@@ -11,3 +11,4 @@ EM_shower/
 # File di configurazione locali
 *.log
 
+plots/
