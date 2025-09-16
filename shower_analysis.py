@@ -105,8 +105,8 @@ def plot_width(shower):
     )
 
     # --- Stile e testi ---
-    ax.set_title("# interactions per depth (X₀)", fontsize=18, weight="bold")
-    ax.set_xlabel("X₀", fontsize=14)
+    ax.set_title("# interactions per steps", fontsize=18, weight="bold")
+    ax.set_xlabel("Steps", fontsize=14)
     ax.set_ylabel("# interactions", fontsize=14)
     ax.grid(True, linestyle="--", alpha=0.6)
     ax.legend()
@@ -227,9 +227,9 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
     # --- plotting ---
     fig, ax1 = plt.subplots(1, figsize=(7,5))
     plot(ax1, energies, levels, levels_err, 
-        "Max energy depth vs Initial energy", 
+        "Shower maximum vs Initial energy", 
         "Initial energy (MeV)", 
-        "Depth with max energy deposit", 
+        "Shower maximum (steps)", 
         'o-', "orange")
 
     ax1.plot(x_fit, y_fit, "-", color="gray", linewidth=2, zorder=3)
@@ -309,7 +309,7 @@ def study_properties(initial_energy, final_energy, times):
         ax, energies, depth, depth_err, 
         "Shower Depth vs Initial Energy", 
         "Initial Energy (MeV)", 
-        "Depth (X₀)"
+        "Depth (Steps)"
     )
 
     plt.tight_layout()

@@ -26,6 +26,7 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
     step += 1
     counter_int=0
     markov_array=[]
+    markov_counter={"brems": 0, "pp": 0, "ann":0, "stay_e":0, "stay_p":0}
     while step < depth:
         old_interactions = history[step - 1] #only last step
         if len(old_interactions)==0:
@@ -49,6 +50,7 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
                     substep += 1
                     photon_decay(nodes, edges, prob, old_inter, state, step, substep, energy[1])
                     substep += 1
+                markov_counter["brems"]+=1
             elif old_inter.kind == "pp": 
                 charge=old_inter.charge
                 prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "pp")
@@ -69,15 +71,18 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
                     new_charge=-1
                     electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep, state, new_charge, energy[1])
                     substep += 1
+                markov_counter["pp"]+=1
             elif old_inter.kind == "ann": #2 fotoni da annichilazione
                 prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "ann")
                 photon_decay(nodes, edges, prob, old_inter, state, step, substep, energy[0])
                 substep += 1
                 photon_decay(nodes, edges, prob, old_inter, state, step, substep, energy[1])
+                markov_counter["ann"]+=1
             elif old_inter.kind=="stay_p": #diminuisce l'energia del fotone
                 prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "stay_p")
                 photon_decay(nodes, edges, prob, old_inter, state, step, substep, old_inter.energy*0.8) 
                 substep += 1
+                markov_counter["stay_p"]+=1
             elif old_inter.kind == "stay_e": #diminuisce l'energia dell'elettrone
                 prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "stay_e")
                 charge=old_inter.charge
@@ -89,6 +94,7 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
                     #electron
                     electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep,state, charge, old_inter.energy*0.8)
                     substep += 1
+                markov_counter["stay_e"]+=1
             #pulisce i due buffer da interazioni già usate        
             for p in pos_buffer:
                 if p.charge !=1 and p.charge !=2:
@@ -110,5 +116,26 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
     shower.add_edges_from(edges)
     #print("nodi totali", counter_int, '\n')
     #print("link totali", shower.number_of_edges(), '\n')    
+    states = list(markov_array[0].keys())
+    inter_number = len(markov_array)
+    sum_matrix={s: {t: 0.0 for t in states} for s in states}
+
+    for matrix in markov_array:
+        for s in states:
+            for t in states:
+                sum_matrix[s][t] += matrix[s][t]
+    
+    markov_norm = {
+    s: {k: v / markov_counter[s] for k, v in t.items()}
+    for s, t in sum_matrix.items()
+    }
+
+    #print(markov_norm)
+    
+    
+    
+    #print(sum_matrix)
+    #print(markov_counter)
+    #print(markov_array)
     return shower, energy_for_step, markov_array
 

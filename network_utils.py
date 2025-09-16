@@ -93,8 +93,8 @@ def plot_energy(energy_deposed):
     )
 
     # --- Stile e testi ---
-    ax.set_title("Energy Deposited per X₀", fontsize=18, weight="bold")
-    ax.set_xlabel("X₀", fontsize=14)
+    ax.set_title("Energy Deposited per Step", fontsize=18, weight="bold")
+    ax.set_xlabel("Steps", fontsize=14)
     ax.set_ylabel("Energy (MeV)", fontsize=14)
     ax.grid(True, linestyle="--", alpha=0.6)
     ax.legend()

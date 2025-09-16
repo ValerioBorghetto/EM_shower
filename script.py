@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import time
 
 ###settings###########
-initial_energy=200  #(MeV), >10 for relativistic limit
+initial_energy=300  #(MeV), >10 for relativistic limit
 depth=40            #Maximum depth of the material
 material_Z=40       #work in progress
 ####################
@@ -62,4 +62,4 @@ interaction_show()
 network_degree(300)
 """
 
-network_degree(300)
+#network_degree(300)

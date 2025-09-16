@@ -38,14 +38,16 @@ def build_markov(lepton_energy, photon_energy, Z, buffer, old_interactions):
     p_eb = bremss_probab(lepton_energy, Z)   # elettrone → brems
     #print("prob brems:",p_eb)
     p_ea = ann_probab(lepton_energy, Z, buffer, old_interactions)   # elettrone → annichilazione
-    p_es = 1-p_eb - p_ea   # elettrone → stay_e
+    if (p_ea+p_eb<1):
+        p_es = 1-p_eb - p_ea   # elettrone → stay_e
+    else: p_es=0
     p_pp = pairprod_probab(photon_energy, Z)   # fotone → pair production
     p_ps = 1-p_pp   # fotone → stay_p
     prob = {  #matrice di probabilità di transizione
-        'brems': {'brems': p_eb, 'pp': p_pp, 'ann':p_ea, 'stay_e': p_es, 'stay_p':0},
+        'brems': {'brems': p_eb, 'pp': p_pp, 'ann':p_ea, 'stay_e': p_es, 'stay_p':p_ps},
         'pp': {'brems': p_eb, 'pp': 0, 'ann':p_ea, 'stay_e': p_es, 'stay_p':0}, 
         'ann': {'brems': 0, 'pp': p_pp, 'ann':0, 'stay_e': 0, 'stay_p':p_ps},
-        'stay_e':{'brems': p_eb, 'pp': p_pp, 'ann':0, 'stay_e': p_es, 'stay_p':0},
+        'stay_e':{'brems': p_eb, 'pp': 0, 'ann':p_ea, 'stay_e': p_es, 'stay_p':0},
         'stay_p':{'brems': 0, 'pp': p_pp, 'ann':0, 'stay_e': 0, 'stay_p':p_ps}
     }
     return prob
