@@ -180,8 +180,8 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
         ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
         ax.grid(True)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-    plot(ax1, energies, levels, levels_err, "Max energy depth vs Initial energy",
-         "Initial energy", "Depth with max energy deposit", 'o-', 'blue')
+    plot(ax1, energies, levels, levels_err, "Shower maximum vs Initial energy",
+         "Initial energy", "Shower maximum (steps)", 'o-', 'blue')
     plot(ax2, energies, widths, widths_err, "Max interaction depth vs Initial energy",
          "Initial energy", "Depth with max interactions", 's--', 'orange')
     plt.tight_layout()
@@ -227,9 +227,9 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
     # --- plotting ---
     fig, ax1 = plt.subplots(1, figsize=(7,5))
     plot(ax1, energies, levels, levels_err, 
-        "Max energy depth vs Initial energy", 
+        "Shower maximum vs Initial energy", 
         "Initial energy (MeV)", 
-        "Depth with max energy deposit", 
+        "Shower maximum (steps)", 
         'o-', "orange")
 
     ax1.plot(x_fit, y_fit, "-", color="gray", linewidth=2, zorder=3)

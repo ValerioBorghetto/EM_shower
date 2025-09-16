@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import time
 
 ###settings###########
-initial_energy=200  #(MeV), >10 for relativistic limit
+initial_energy=300  #(MeV), >10 for relativistic limit
 depth=40            #Maximum depth of the material
 material_Z=40       #work in progress
 ####################
@@ -27,7 +27,7 @@ print(f"Execution time: {execution_time} seconds")
 
 #plot the shower
 #plot_shower(shower, tree=True, color=True) #tree decide se vuoi la raffigurazione ad albero, color se vuoi gli edges colorati
-"""
+
 #study of the adjacency matrix 
 #adj_matrix_study(300, 50)
 
@@ -58,8 +58,5 @@ for m in measures:
 study_properties(10, 1000, 10)
 
 interaction_show()
-
-network_degree(300)
-"""
 
 network_degree(300)
