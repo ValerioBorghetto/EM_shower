@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from build_shower.em_utils import *
 
 #costanti fisiche#####
-E_cut=2.5#1.3 (per il confronto con la markov) #MeV, sotto questa soglia l'energia si deposita
+E_cut=1.3 #(per il confronto con la markov) #MeV, sotto questa soglia l'energia si deposita
 ##################################
 
 #genera la shower, partendo da un bremsstralung
@@ -26,7 +26,6 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
     step += 1
     counter_int=0
     markov_array=[]
-    markov_counter={"brems": 0, "pp": 0, "ann":0, "stay_e":0, "stay_p":0}
     while step < depth:
         old_interactions = history[step - 1] #only last step
         if len(old_interactions)==0:
@@ -50,7 +49,6 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
                     substep += 1
                     photon_decay(nodes, edges, prob, old_inter, state, step, substep, energy[1])
                     substep += 1
-                markov_counter["brems"]+=1
             elif old_inter.kind == "pp": 
                 charge=old_inter.charge
                 prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "pp")
@@ -70,19 +68,15 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
                 elif charge==-1: #rimasto solo l'electron
                     new_charge=-1
                     electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep, state, new_charge, energy[1])
-                    substep += 1
-                markov_counter["pp"]+=1
             elif old_inter.kind == "ann": #2 fotoni da annichilazione
                 prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "ann")
                 photon_decay(nodes, edges, prob, old_inter, state, step, substep, energy[0])
                 substep += 1
                 photon_decay(nodes, edges, prob, old_inter, state, step, substep, energy[1])
-                markov_counter["ann"]+=1
             elif old_inter.kind=="stay_p": #diminuisce l'energia del fotone
                 prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "stay_p")
                 photon_decay(nodes, edges, prob, old_inter, state, step, substep, old_inter.energy*0.8) 
                 substep += 1
-                markov_counter["stay_p"]+=1
             elif old_inter.kind == "stay_e": #diminuisce l'energia dell'elettrone
                 prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "stay_e")
                 charge=old_inter.charge
@@ -94,7 +88,6 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
                     #electron
                     electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep,state, charge, old_inter.energy*0.8)
                     substep += 1
-                markov_counter["stay_e"]+=1
             #pulisce i due buffer da interazioni già usate        
             for p in pos_buffer:
                 if p.charge !=1 and p.charge !=2:
@@ -125,17 +118,28 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
             for t in states:
                 sum_matrix[s][t] += matrix[s][t]
     
-    markov_norm = {
-    s: {k: v / markov_counter[s] for k, v in t.items()}
-    for s, t in sum_matrix.items()
+    keys_to_sum = {
+        "brems": ["brems", "ann", "stay_e"],
+        "pp": ["brems", "ann", "stay_e"],
+        "stay_e": ["brems", "ann", "stay_e"],
+        "ann": ["pp", "stay_p"],
+        "stay_p": ["pp", "stay_p"]
     }
 
-    #print(markov_norm)
-    
-    
-    
-    #print(sum_matrix)
-    #print(markov_counter)
-    #print(markov_array)
-    return shower, energy_for_step, markov_array
+    norm = {}
+
+    for s, t in sum_matrix.items():
+        norm[s] = {}
+        # somma dei valori del gruppo selezionato
+        group_sum = sum(t[k] for k in keys_to_sum[s] if k in t)
+        # somma dei valori fuori dal gruppo
+        other_keys = [k for k in t if k not in keys_to_sum[s]]
+        other_sum = sum(t[k] for k in other_keys)
+
+        for k, v in t.items():
+            if k in keys_to_sum[s]:
+                norm[s][k] = v / group_sum if group_sum > 0 else 0.0
+            else:
+                norm[s][k] = v / other_sum if other_sum > 0 else 0.0
+    return shower, energy_for_step, norm
 

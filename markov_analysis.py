@@ -5,6 +5,125 @@ from network_utils import*
 from build_shower.em_shower import*
 from tqdm import tqdm
 import pandas as pd
+import seaborn as sns
+from collections import defaultdict, Counter
+
+def markov_plot(markov_dic):
+    df = pd.DataFrame(markov_dic).T  
+    plt.figure(figsize=(8,6))
+    sns.heatmap(df, annot=True, fmt=".2f", cmap="viridis", cbar=True)
+    plt.xlabel("Final state")
+    plt.ylabel("Initial state")
+    plt.title("Transition matrix averaged over all interactions")
+    plt.savefig("plots/Average_markov.pdf")
+    plt.show()
+    plt.close()
+
+def analyze_markov_vs_shower( depth=30, initial_energy=300, material_Z=20, n_avg=100):
+    """
+    Analyze correspondence between Markov chain avg Markov simulation and shower graphs.
+    The transition matrix is obtained directly from generate_shower.
+
+    Parameters:
+    -----------
+    generate_shower : function
+        Function that generates a shower and returns (graph, _, transition_matrix)
+    depth : int
+        Depth of generated graphs
+    initial_energy : float
+        Initial particle energy
+    material_Z : int
+        Material Z
+    n_avg Markov simulation : int
+        Number of avg Markov simulation/graphs to simulate
+    """
+    # Generate one shower to get the transition matrix and number of nodes
+    shower, _, transition_matrix = generate_shower(depth=depth, initial_energy=initial_energy,
+                                                   Z=material_Z, initial_particle="electron")
+    states = list(transition_matrix.keys())
+    n_nodes = shower.number_of_nodes()
+
+    # Function to pick next state in the Markov chain
+    def next_state(current):
+        probs = list(transition_matrix[current].values())
+        next_states = list(transition_matrix[current].keys())
+        return random.choices(next_states, weights=probs, k=1)[0]
+
+    # Simulate a single Markov chain trajectory
+    def simulate_markov_chain(start, steps):
+        state = start
+        path = [state]
+        for _ in range(steps):
+            state = next_state(state)
+            path.append(state)
+        return path
+
+    # Count appearances of each state over all avg Markov simulation
+    state_counts = defaultdict(list)
+    for _ in range(n_avg):
+        trajectory = simulate_markov_chain('brems', steps=n_nodes)
+        counts = Counter(trajectory)
+        for s in states:
+            state_counts[s].append(counts.get(s, 0))
+
+    state_means = {s: np.mean(vals) for s, vals in state_counts.items()}
+
+    # Bar plot of average trajectory counts
+    plt.figure(figsize=(8, 6))
+    plt.bar(state_means.keys(), state_means.values(), color="skyblue", edgecolor="black")
+    plt.xlabel("States")
+    plt.ylabel("Average appearances")
+    plt.title(f"Average state frequency over {n_avg} Avg Markov simulation ({n_nodes} steps)")
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
+    plt.show()
+
+    # Count "kind" from shower graphs
+    kind_counts = defaultdict(list)
+    for _ in range(n_avg ):
+        shower, _, _ = generate_shower(depth=depth, initial_energy=initial_energy,
+                                       Z=material_Z, initial_particle="electron")
+        kinds = list(nx.get_node_attributes(shower, "kind").values())
+        labels, counts = np.unique(kinds, return_counts=True)
+        for label, count in zip(labels, counts):
+            kind_counts[label].append(count)
+    
+    kind_means = {k: np.mean(v) for k, v in kind_counts.items()}
+
+    # Compare trajectory vs shower values
+    types = list(state_means.keys())
+    traj_values = [state_means[t] for t in types]
+    shower_values = [kind_means.get(t, 0) for t in types]
+
+    x = np.arange(len(types))
+    width = 0.35
+
+    plt.figure(figsize=(10,6))
+    plt.bar(x - width/2, traj_values, width, label='Avg Markov simulation', color='skyblue', edgecolor='black')
+    plt.bar(x + width/2, shower_values, width, label='Shower', color='salmon', edgecolor='black')
+    plt.xticks(x, types)
+    plt.ylabel("Average appearances")
+    plt.title("Comparison of average appearances per type")
+    plt.legend()
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
+    plt.show()
+
+    # Relative frequencies
+    traj_freq = np.array(traj_values) / np.sum(traj_values)
+    shower_freq = np.array(shower_values) / np.sum(shower_values)
+
+    plt.figure(figsize=(10,5))
+    plt.bar(x - width/2, traj_freq, width, label='Avg Markov simulation', color='skyblue', edgecolor='black')
+    plt.bar(x + width/2, shower_freq, width, label='Shower', color='salmon', edgecolor='black')
+    plt.xticks(x, types)
+    plt.ylabel("Relative frequency")
+    plt.title("Comparison of relative frequencies per type")
+    plt.legend()
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
+    plt.savefig("plots/markov_vs_shower.pdf")
+    plt.show()
+    plt.close()
+
+    return state_means, kind_means, traj_freq, shower_freq
 
 #centrality measures
 def centrality_meas(graph, kind="in_degree", show=True):

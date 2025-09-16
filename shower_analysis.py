@@ -83,6 +83,81 @@ def adj_matrix_study(initial_energy, n_iter):
     plt.savefig("plots/degree_professional.pdf")
     plt.show()
     plt.close()
+
+
+def plot_degree_vs_energy_with_error(initial_energies=None, n_iter=200, depth=40, Z=40):
+    """
+    generate_shower: funzione che restituisce (graph, _, _)
+    initial_energies: lista/array di energie
+    n_iter: numero di shower per energia
+    depth, Z: parametri per generate_shower
+    """
+    if initial_energies is None:
+        initial_energies = np.linspace(10, 1000, 20)
+    
+    all_freqs = []    # frequenze medie per ogni energia
+    all_errors = []   # deviazione standard per ogni energia
+
+    for E in tqdm(initial_energies, desc="Simulations"):
+        degree_counts = []
+
+        # genera n_iter shower per energia E
+        for _ in range(n_iter):
+            graph, _, _ = generate_shower(depth=depth, initial_energy=E, Z=Z, initial_particle="electron")
+            adjacency = nx.adjacency_matrix(graph).toarray()
+            in_degree = np.sum(adjacency, axis=1)
+            counts = [np.sum(in_degree == k) for k in range(3)]  # degree 0,1,2
+            degree_counts.append(counts)
+        
+        degree_counts = np.array(degree_counts)
+        degree_means = np.mean(degree_counts, axis=0)
+        degree_std = np.std(degree_counts, axis=0, ddof=1)
+
+        # calcola frequenza relativa media
+        total_mean = np.sum(degree_means)
+        freq = degree_means / total_mean
+
+        # calcola errore relativo sulle frequenze usando propagazione
+        freq_err = freq * np.sqrt((degree_std / degree_means)**2)  # approssimazione errore
+
+        all_freqs.append(freq)
+        all_errors.append(freq_err)
+
+    all_freqs = np.array(all_freqs)
+    all_errors = np.array(all_errors)
+
+    # Plot con barre di errore professionali
+    plt.figure(figsize=(7,6))
+    plt.errorbar(initial_energies, all_freqs[:,0], yerr=all_errors[:,0],
+                 label='Degree 0', color='#4C72B0', marker='o', linestyle='-',
+                 capsize=4, capthick=2, elinewidth=1.5)
+    plt.errorbar(initial_energies, all_freqs[:,1], yerr=all_errors[:,1],
+                 label='Degree 1', color='#55A868', marker='s', linestyle='-',
+                 capsize=4, capthick=2, elinewidth=1.5)
+    plt.errorbar(initial_energies, all_freqs[:,2], yerr=all_errors[:,2],
+                 label='Degree 2', color='#C44E52', marker='^', linestyle='-',
+                 capsize=4, capthick=2, elinewidth=1.5)
+
+    plt.xlabel("Initial Energy (MeV)", fontsize=12)
+    plt.ylabel("Frequency", fontsize=12)
+    plt.title("Degree Distribution vs Energy (with Std Dev)", fontsize=14, fontweight='bold')
+    plt.legend(fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    plt.savefig("plots/degree_vs_energy.pdf")
+    plt.show()
+    plt.close()
+    
+    return initial_energies, all_freqs, all_errors
+
+
+
+
+
+
+
+
+
 #plot the width of the shower (the number of interactions per level)
 def plot_width(shower):
     steps = list(nx.get_node_attributes(shower, "step").values())

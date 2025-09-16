@@ -18,7 +18,7 @@ material_Z=40       #work in progress
 
 start=time.time()
 #generate the shower
-shower, energy_deposed, markov_array=generate_shower(depth=depth, initial_energy=initial_energy, Z=material_Z, initial_particle="electron") #30--->2 seconds
+shower, energy_deposed, norm=generate_shower(depth=depth, initial_energy=initial_energy, Z=material_Z, initial_particle="electron") #30--->2 seconds
 
 #execution time
 end_time = time.time()
@@ -63,3 +63,11 @@ network_degree(300)
 """
 
 #network_degree(300)
+
+#markov_plot(norm)
+
+#plot_degree_vs_energy_with_error()
+
+#analyze_markov_vs_shower()
+
+shower_study(10, 1000, 10, energy=True, width=True)
