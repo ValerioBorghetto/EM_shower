@@ -21,19 +21,28 @@ def plot_kinds(initial_energy, n_iter): #plot the interaction kind versus the ti
     colors = ["#FFA500","#FF0000","#003FAB","#FFD700","#87CEEB"]
     
     # Plot
-    fig, ax = plt.subplots(figsize=(7,5))
-    bars = ax.bar(range(5), type_means, width=0.6, color=colors, edgecolor='black')
+    fig, ax = plt.subplots(figsize=(8, 6)) #(7,5)
+    bars = ax.bar(range(5), type_means, width=0.6, color=colors, edgecolor='black', yerr=type_error, capsize=5,
+              error_kw={'elinewidth':1.2, 'ecolor':'black'})
     ax.set_xticks(range(len(type_means)))
     ax.set_xticklabels(labels, fontsize=12)
-    ax.set_ylabel("Average number of occurrence", fontsize=12)
+    ax.set_ylabel("Occurrence", fontsize=12)
     ax.set_xlabel("Interaction type", fontsize=12)
-    ax.set_title(f"Interaction occurrence for showers of {initial_energy} MeV",
-             fontsize=14, fontweight='bold')
+    ax.set_title(f"Interaction occurrence", fontsize=14) #,fontsize=14, fontweight='bold' for showers of {initial_energy} MeV"
     # Griglia leggera
     ax.yaxis.grid(True, linestyle='--', alpha=0.6)
 
     # Aggiungi textbox con valori medi ± errore in alto a sinistra
-    textstr = '\n'.join([f'# {labels[i]}: {type_means[i]:.2f} ± {type_error[i]:.2f}' for i in range(5)])
+    readable_names = {
+    "brems": "Bremsstrahlung",
+    "pp": "Pair Production",
+    "ann": "Annihilation",
+    "stay_e": "No e interaction",
+    "stay_p": "No p interaction"
+    }
+    readable_labels = [readable_names[l] for l in labels]
+
+    textstr = '\n'.join([f'{readable_labels[i]}: {type_means[i]:.2f} ± {type_error[i]:.2f}' for i in range(5)])
     ax.text(0.02, 0.95, textstr, transform=ax.transAxes,
             fontsize=10, verticalalignment='top',
             bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='gray'))
@@ -60,16 +69,16 @@ def adj_matrix_study(initial_energy, n_iter):
     colors = ['#4C72B0','#4C72B0','#4C72B0']
 
     # Plot
-    fig, ax = plt.subplots(figsize=(7,5))
-    bars = ax.bar(range(3), degree_means, width=0.6, color=colors, edgecolor='black')
+    fig, ax = plt.subplots(figsize=(8,6)) #(7,5)
+    bars = ax.bar(range(3), degree_means, width=0.6, color=colors, edgecolor='black', alpha=0.8,
+              yerr=degree_errors, capsize=5, error_kw={'elinewidth':1.2, 'ecolor':'black'})
 
     # Ticks e labels
     ax.set_xticks([0, 1, 2])
     ax.set_xticklabels([0, 1, 2], fontsize=12)
     ax.set_ylabel("Average number of nodes", fontsize=12)
     ax.set_xlabel("Degree", fontsize=12)
-    ax.set_title(f"Out-Degree Distribution for showers of {initial_energy} MeV",
-             fontsize=14, fontweight='bold')
+    ax.set_title(f"Out-Degree Distribution for showers of {initial_energy} MeV", fontsize=14)
     # Griglia leggera
     ax.yaxis.grid(True, linestyle='--', alpha=0.6)
 
@@ -83,13 +92,173 @@ def adj_matrix_study(initial_energy, n_iter):
     plt.savefig("plots/degree_professional.pdf")
     plt.show()
     plt.close()
+
+def adj_matrix_study_max_width(initial_energy, n_iter):
+    all_counts_first, all_counts_second = [], []
+
+    for _ in tqdm(range(n_iter), desc="Simulation 4"):
+        graph, _, _ = generate_shower(depth=40, initial_energy=initial_energy, Z=40, initial_particle="electron")
+        
+        # --- Estrazione step dei nodi ---
+        node_steps = nx.get_node_attributes(graph, "step")
+        steps = np.array(list(node_steps.values()))
+        
+        # --- Trova lo step con il massimo della width ---
+        levels, counts = np.unique(steps, return_counts=True)
+        max_width_step = levels[np.argmax(counts)]
+        
+        # --- Divide nodi in due metà ---
+        first_half_nodes = [n for n, s in node_steps.items() if s <= max_width_step]
+        second_half_nodes = [n for n, s in node_steps.items() if s > max_width_step]
+
+        adjacency = nx.adjacency_matrix(graph).toarray()
+        out_degrees = np.sum(adjacency, axis=1)  # out-degree
+
+        # Mappa nodo->indice in matrice per estrarre i gradi
+        nodes_list = list(graph.nodes())
+        node_to_idx = {n: i for i, n in enumerate(nodes_list)}
+
+        # Calcola counts per out-degree 0,1,2 
+        def degree_counts(node_subset):
+            indices = [node_to_idx[n] for n in node_subset]
+            degs = out_degrees[indices]
+            return [np.sum(degs == k) for k in range(3)]
+
+        all_counts_first.append(degree_counts(first_half_nodes))
+        all_counts_second.append(degree_counts(second_half_nodes))
+
+    # --- Media e errore ---
+    all_counts_first = np.array(all_counts_first)
+    all_counts_second = np.array(all_counts_second)
+    
+    degree_means_first = np.mean(all_counts_first, axis=0)
+    degree_errors_first = np.std(all_counts_first, axis=0, ddof=1) / np.sqrt(n_iter)
+
+    degree_means_second = np.mean(all_counts_second, axis=0)
+    degree_errors_second = np.std(all_counts_second, axis=0, ddof=1) / np.sqrt(n_iter)
+
+    # --- Plot a barre affiancate ---
+    labels = [0, 1, 2]
+    x = np.arange(len(labels))
+    width = 0.35
+
+    fig, ax = plt.subplots(figsize=(8,6)) #8, 5
+    ax.bar(x - width/2, degree_means_first, width, yerr=degree_errors_first, label='_nolegend_', 
+           color='#4C72B0', edgecolor='black', alpha=0.8, capsize=5, error_kw={'elinewidth':1.2, 'ecolor':'black'})
+    ax.bar(x + width/2, degree_means_second, width, yerr=degree_errors_second, label='_nolegend_', 
+           color='#55A868', edgecolor='black', alpha=0.8, capsize=5, error_kw={'elinewidth':1.2, 'ecolor':'black'})
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, fontsize=12)
+    ax.set_ylabel("Occurrence", fontsize=12)
+    ax.set_xlabel("Out-Degree", fontsize=12)
+    ax.set_title(f"Out-Degree Distribution split at max width", fontsize=14) #for showers of {initial_energy} MeV" fontsize=14, fontweight='bold'
+    ax.yaxis.grid(True, linestyle='--', alpha=0.6)
+
+    #legend
+    proxy1 = mpatches.Patch(color='#4C72B0', label='Before max width')
+    proxy2 = mpatches.Patch(color='#55A868', label='After max width')
+    ax.legend(handles=[proxy1, proxy2])
+
+    # --- Aggiungi textbox con valori medi ± errore per la prima metà ---
+    textstr_first = '\n'.join([f'Degree {i}: {degree_means_first[i]:.2f} ± {degree_errors_first[i]:.2f}' for i in range(3)])
+    ax.text(0.02, 0.95, textstr_first, transform=ax.transAxes,
+            fontsize=10, verticalalignment='top',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='#4C72B0')) #edgecolor='gray'
+
+    # --- Aggiungi textbox per la seconda metà ---
+    textstr_second = '\n'.join([f'Degree {i}: {degree_means_second[i]:.2f} ± {degree_errors_second[i]:.2f}' 
+                                for i in range(3)])
+    ax.text(0.02, 0.80, textstr_second, transform=ax.transAxes,
+            fontsize=10, verticalalignment='top',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='#55A868'))
+
+    plt.tight_layout()
+    plt.savefig("plots/out_degree_comparison.pdf")
+    plt.show()
+    plt.close()
+
+
+def plot_degree_vs_energy_with_error(initial_energies=None, n_iter=200, depth=40, Z=40):
+    """
+    generate_shower: funzione che restituisce (graph, _, _)
+    initial_energies: lista/array di energie
+    n_iter: numero di shower per energia
+    depth, Z: parametri per generate_shower
+    """
+    if initial_energies is None:
+        initial_energies = np.linspace(10, 1000, 20)
+    
+    all_freqs = []    # frequenze medie per ogni energia
+    all_errors = []   # deviazione standard per ogni energia
+
+    for E in tqdm(initial_energies, desc="Simulations"):
+        degree_counts = []
+
+        # genera n_iter shower per energia E
+        for _ in range(n_iter):
+            graph, _, _ = generate_shower(depth=depth, initial_energy=E, Z=Z, initial_particle="electron")
+            adjacency = nx.adjacency_matrix(graph).toarray()
+            in_degree = np.sum(adjacency, axis=1)
+            counts = [np.sum(in_degree == k) for k in range(3)]  # degree 0,1,2
+            degree_counts.append(counts)
+        
+        degree_counts = np.array(degree_counts)
+        degree_means = np.mean(degree_counts, axis=0)
+        degree_std = np.std(degree_counts, axis=0, ddof=1)
+
+        # calcola frequenza relativa media
+        total_mean = np.sum(degree_means)
+        freq = degree_means / total_mean
+
+        # calcola errore relativo sulle frequenze usando propagazione
+        freq_err = freq * np.sqrt((degree_std / degree_means)**2)  # approssimazione errore
+
+        all_freqs.append(freq)
+        all_errors.append(freq_err)
+
+    all_freqs = np.array(all_freqs)
+    all_errors = np.array(all_errors)
+
+    # Plot con barre di errore professionali
+    plt.figure(figsize=(8,6)) #(7,6)
+    plt.errorbar(initial_energies, all_freqs[:,0], yerr=all_errors[:,0],
+                 label='Degree 0', color='#4C72B0', marker='o', linestyle='-',
+                 capsize=4, capthick=2, elinewidth=1.5)
+    plt.errorbar(initial_energies, all_freqs[:,1], yerr=all_errors[:,1],
+                 label='Degree 1', color='#55A868', marker='s', linestyle='-',
+                 capsize=4, capthick=2, elinewidth=1.5)
+    plt.errorbar(initial_energies, all_freqs[:,2], yerr=all_errors[:,2],
+                 label='Degree 2', color='#C44E52', marker='^', linestyle='-',
+                 capsize=4, capthick=2, elinewidth=1.5)
+
+    plt.xlabel("Initial Energy (MeV)", fontsize=12)
+    plt.ylabel("Frequency", fontsize=12)
+    plt.title("Degree Distribution vs Energy (with Std Dev)") #, fontsize=14, fontweight='bold'
+    plt.legend(fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    plt.savefig("plots/degree_vs_energy.pdf")
+    plt.show()
+    plt.close()
+    
+    return initial_energies, all_freqs, all_errors
+
+
+
+
+
+
+
+
+
 #plot the width of the shower (the number of interactions per level)
 def plot_width(shower):
     steps = list(nx.get_node_attributes(shower, "step").values())
     levels, counts = np.unique(steps, return_counts=True)
 
     # --- Preparazione figura ---
-    fig, ax = plt.subplots(figsize=(7, 5))
+    fig, ax = plt.subplots(figsize=(8, 6)) #(7, 5)
 
     # linea più chiara sotto
     ax.plot(
@@ -105,11 +274,11 @@ def plot_width(shower):
     )
 
     # --- Stile e testi ---
-    ax.set_title("# interactions per depth (X₀)", fontsize=18, weight="bold")
-    ax.set_xlabel("X₀", fontsize=14)
-    ax.set_ylabel("# interactions", fontsize=14)
+    ax.set_title("Total interactions occurrences per step", fontsize=14) #, fontsize=18, weight="bold"
+    ax.set_xlabel("Step", fontsize=12)
+    ax.set_ylabel("Occurrences", fontsize=12)
     ax.grid(True, linestyle="--", alpha=0.6)
-    ax.legend()
+    #ax.legend()
 
     # --- Stile globale coerente ---
     plt.tight_layout()
@@ -132,10 +301,10 @@ def level_count(shower):
         "stay_p": "#87CEEB",    # azzurro
     }
     colors = [color_map.get(col, "#000000") for col in tabella.columns]
-    tabella.plot(kind='line', figsize=(12, 6), marker='o', color=colors)
-    plt.title("Number of different interactions over shower depth")
-    plt.xlabel("Depth")
-    plt.ylabel("Counts")
+    tabella.plot(kind='line', figsize=(10, 6), marker='o', color=colors) #(12, 6)
+    plt.title("Interaction occurrence per step", fontsize = 14) #Number of different interactions over shower depth
+    plt.xlabel("Step", fontsize = 12)
+    plt.ylabel("Occurence", fontsize = 12)
 
     readable_names = {
         "brems": "Bremsstrahlung",
@@ -147,6 +316,7 @@ def level_count(shower):
     patches = [mpatches.Patch(color=color_map[col], label=readable_names[col]) for col in tabella.columns]
     plt.legend(handles=patches, title="Interaction")
     plt.grid(True)
+    plt.tight_layout()
     plt.savefig("plots/interaction_vs_depth.pdf")
     plt.show()
     plt.close()
@@ -178,14 +348,17 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
     def plot(ax, x, y, yerr, title, xlabel, ylabel, fmt, color):
         ax.errorbar(x, y, yerr=yerr, fmt=fmt, capsize=5, color=color)
         ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
+        ax.set_xlabel(xlabel, fontsize=12)
+        ax.set_ylabel(ylabel, fontsize=12)
+        ax.set_title(title, fontsize=14)
         ax.grid(True)
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 6)) #(12, 5)
     plot(ax1, energies, levels, levels_err, "Shower maximum vs Initial energy",
          "Initial energy", "Shower maximum (steps)", 'o-', 'blue')
     plot(ax2, energies, widths, widths_err, "Max interaction depth vs Initial energy",
          "Initial energy", "Depth with max interactions", 's--', 'orange')
     plt.tight_layout()
-    plt.savefig("plots/depth_vs_energy.pdf")
+    #plt.savefig("plots/depth_vs_energy.pdf")
     plt.show()
     plt.close()
 
@@ -206,9 +379,9 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
             ecolor="darkblue", color="darkblue", 
             markersize=2, zorder=2
         )
-        ax.set_title(title, fontsize=18, weight="bold")
-        ax.set_xlabel(xlabel, fontsize=14)
-        ax.set_ylabel(ylabel, fontsize=14)
+        ax.set_title(title, fontsize=14) #, fontsize=18, weight="bold"
+        ax.set_xlabel(xlabel, fontsize=12)
+        ax.set_ylabel(ylabel, fontsize=12)
         ax.grid(True, linestyle="--", alpha=0.6)
 
     # --- errori sui parametri ---
@@ -225,9 +398,9 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
     chi2_red = chi2 / ndof
 
     # --- plotting ---
-    fig, ax1 = plt.subplots(1, figsize=(7,5))
+    fig, ax1 = plt.subplots(1, figsize=(8, 6)) #(7,5)
     plot(ax1, energies, levels, levels_err, 
-        "Shower maximum vs Initial energy", 
+        "Shower maximum vs. Initial energy", 
         "Initial energy (MeV)", 
         "Shower maximum (steps)", 
         'o-', "orange")
@@ -239,15 +412,15 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
         f'{name} = {val:.2f} ± {err:.2f}' 
         for name, val, err in zip(['a','b'], popt, perr)
     ])
-    textstr += f"\nχ²/ndof = {chi2:.2f}/{ndof} = {chi2_red:.2f}"
+    textstr += f"\nχ²/ndof =  {chi2_red:.2f}" #{chi2:.2f}/{ndof} =
 
     ax1.text(0.02, 0.95, textstr, transform=ax1.transAxes,
         fontsize=12, verticalalignment='top',
         bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='gray'))
 
-    plt.style.use("seaborn-v0_8-darkgrid")
+    #plt.style.use("seaborn-v0_8-darkgrid")
     plt.tight_layout()
-    plt.savefig("plots/depth_vs_energy_fit.pdf")
+    plt.savefig("plots/maximum_vs_energy_fit.pdf")
     plt.show()
     plt.close()
 
@@ -292,28 +465,28 @@ def study_properties(initial_energy, final_energy, times):
         )
 
         # testi e griglia
-        ax.set_title(title, fontsize=18, weight="bold")
-        ax.set_xlabel(xlabel, fontsize=14)
-        ax.set_ylabel(ylabel, fontsize=14)
+        ax.set_title(title, fontsize=14)  #, fontsize=18, weight="bold"
+        ax.set_xlabel(xlabel, fontsize=12)
+        ax.set_ylabel(ylabel, fontsize=12)
         ax.grid(True, linestyle="--", alpha=0.6)
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12,5))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8,6)) #8,5
     plot(ax1, energies, node, node_err, "# Nodes vs Initial energy", "Initial energy", "# Nodes", 'o-', "orange")
     plot(ax2, energies, edges, edges_err, "# Edges vs Initial energy", "Initial energy", "# Edges", 's--', "orange")
     plt.tight_layout()
     plt.savefig("plots/nodes_edges_vs_energy.pdf")
     plt.show()
     plt.close()  
-    fig, ax = plt.subplots(figsize=(7, 5))
-
+    fig, ax = plt.subplots(figsize=(8, 6), facecolor='white') #8, 5
+    
     plot(
         ax, energies, depth, depth_err, 
-        "Shower Depth vs Initial Energy", 
-        "Initial Energy (MeV)", 
-        "Depth (X₀)"
+        "Shower depth vs. Initial energy", 
+        "Initial energy (MeV)", 
+        "Depth (steps)"
     )
 
     plt.tight_layout()
-    ax.legend()
+    #ax.legend()
     plt.savefig("plots/depth_vs_energy.pdf")
     plt.show()
     plt.close()

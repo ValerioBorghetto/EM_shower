@@ -18,7 +18,7 @@ material_Z=40       #work in progress
 
 start=time.time()
 #generate the shower
-shower, energy_deposed, markov_array=generate_shower(depth=depth, initial_energy=initial_energy, Z=material_Z, initial_particle="electron") #30--->2 seconds
+shower, energy_deposed, norm=generate_shower(depth=depth, initial_energy=initial_energy, Z=material_Z, initial_particle="electron") #30--->2 seconds
 
 #execution time
 end_time = time.time()
@@ -26,10 +26,12 @@ execution_time = end_time - start
 print(f"Execution time: {execution_time} seconds")
 
 #plot the shower
-#plot_shower(shower, tree=True, color=True) #tree decide se vuoi la raffigurazione ad albero, color se vuoi gli edges colorati
+plot_shower(shower, tree=True, color=True) #tree decide se vuoi la raffigurazione ad albero, color se vuoi gli edges colorati
+
 
 #study of the adjacency matrix 
 #adj_matrix_study(300, 50)
+adj_matrix_study_max_width(300, 50)
 
 #study of the shower properties
 #plot deposited energy
@@ -43,20 +45,19 @@ level_count(shower)
 
 
 #study the mean values over different initial energy values
+draw_markov(norm)
 shower_study(10, 1000, 10, energy=True, width=True)
 
 #markov analysis
-#fa la media di tutte le markov della shower, e ne studia le misure di centralità
-avg_matrix=average_markov(markov_array)
-print(avg_matrix)
-
-avg_graph=draw_markov(avg_matrix)
-measures=["random walk", "eigenvector", "betweenness", "in_degree", "out_degree", "flow betweenness"]
-for m in measures:
-    meas=centrality_meas(avg_graph, kind=m)
-
 study_properties(10, 1000, 10)
 
 interaction_show()
 
 network_degree(300)
+
+markov_plot(norm)
+
+plot_degree_vs_energy_with_error()
+
+analyze_markov_vs_shower()
+

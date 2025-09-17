@@ -5,7 +5,7 @@ import matplotlib.patches as mpatches
 
 #plot adj. matrix
 def plot_adjacency_matrix(adj_matrix, title="Adjacency Matrix", labels=[]): 
-    plt.figure(figsize=(6,6))
+    plt.figure(figsize=(8,6)) #figsize=(6,6)
     plt.imshow(adj_matrix, cmap='gray_r', interpolation='none')
     plt.title(title)
     plt.colorbar(label="Edge Weight")
@@ -39,7 +39,7 @@ def plot_shower(shower, tree=False, color=False, size=80):
         node_colors = "skyblue"
 
     # Disegno del grafo
-    plt.figure(figsize=(14, 10))
+    plt.figure(figsize=(14, 10)) 
     nx.draw(
         shower, pos,
         with_labels=False,
@@ -49,7 +49,7 @@ def plot_shower(shower, tree=False, color=False, size=80):
         font_size=8,
         arrows=True
     )
-    plt.title("EM shower", fontsize=14)
+    plt.title("EM shower") #, fontsize=14
     plt.axis('off')
     plt.tight_layout()
     # Legenda se color è attivo
@@ -77,7 +77,7 @@ def plot_energy(energy_deposed):
     x = np.arange(len(energy_deposed))
 
     # --- Preparazione figura ---
-    fig, ax = plt.subplots(figsize=(7, 5))
+    fig, ax = plt.subplots(figsize=(8, 6)) #(7, 5)
 
     # linea più chiara sotto
     ax.plot(
@@ -93,11 +93,11 @@ def plot_energy(energy_deposed):
     )
 
     # --- Stile e testi ---
-    ax.set_title("Energy Deposited per X₀", fontsize=18, weight="bold")
-    ax.set_xlabel("X₀", fontsize=14)
-    ax.set_ylabel("Energy (MeV)", fontsize=14)
+    ax.set_title("Energy deposited per step", fontsize=14) #, fontsize=18, weight="bold"
+    ax.set_xlabel("Step", fontsize=12)
+    ax.set_ylabel("Energy (MeV)", fontsize=12)
     ax.grid(True, linestyle="--", alpha=0.6)
-    ax.legend()
+    #ax.legend()
 
     # --- Stile globale coerente ---
     plt.tight_layout()
