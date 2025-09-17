@@ -115,7 +115,7 @@ def draw_markov(probability_matrix):
         "stay_p": "No p interaction"
     }
     patches = [mpatches.Patch(color=color_map[state], label=readable_names[state]) for state in states]
-    plt.legend(handles=patches, title="Interaction")
+    plt.legend(handles=patches, framealpha=0.8, edgecolor='gray')
     plt.savefig("plots/Markov.pdf")
     plt.show()
     plt.close()

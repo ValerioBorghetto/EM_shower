@@ -12,7 +12,7 @@ def plot_adjacency_matrix(adj_matrix, title="Adjacency Matrix", labels=[]):
     # Imposta le etichette per righe e colonne
     plt.xticks(np.arange(len(labels)), labels, rotation=90)  # Etichette per le colonne
     plt.yticks(np.arange(len(labels)), labels)               # Etichette per le righe
-
+    plt.tight_layout()
     filename = f"plots/{title.replace(' ', '_')}.pdf" 
     plt.savefig(filename) #Adiacency matrix
     plt.show()
@@ -63,9 +63,10 @@ def plot_shower(shower, tree=False, color=False, size=80):
     if color:
         kinds_present = set(nx.get_node_attributes(shower, "kind").values())
         patches = [mpatches.Patch(color=color_map[k], label=readable_names[k]) for k in kinds_present]
-        plt.legend(handles=patches, title="Interaction")
+        plt.legend(handles=patches, framealpha=0.8, edgecolor='gray', fontsize = 13) #, title="Interaction"
         plt.title("Legenda tipi di interazione")
         plt.axis('off')
+        plt.tight_layout()
         plt.savefig("plots/shower.pdf")
         plt.show()
         plt.close()
@@ -93,9 +94,9 @@ def plot_energy(energy_deposed):
     )
 
     # --- Stile e testi ---
-    ax.set_title("Energy deposited per step", fontsize=14) #, fontsize=18, weight="bold"
+    ax.set_title("Deposited energy per step", fontsize=14) #, fontsize=18, weight="bold"
     ax.set_xlabel("Step", fontsize=12)
-    ax.set_ylabel("Energy (MeV)", fontsize=12)
+    ax.set_ylabel("Deposited energy (MeV)", fontsize=12)
     ax.grid(True, linestyle="--", alpha=0.6)
     #ax.legend()
 

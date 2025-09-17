@@ -61,3 +61,4 @@ plot_degree_vs_energy_with_error()
 
 analyze_markov_vs_shower()
 
+#stationary_vector(norm) 

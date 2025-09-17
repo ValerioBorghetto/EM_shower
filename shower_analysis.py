@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.patches as mpatches
 from scipy.optimize import curve_fit
 
-def plot_kinds(initial_energy, n_iter): #plot the interaction kind versus the time that process has occurred
+def plot_kinds(initial_energy, n_iter):  #plot the interaction kind versus the time that process has occurred
     all_counts=[]
     for _ in tqdm(range(n_iter), desc="Simulation 4"):
         shower, _, _ = generate_shower(depth=40, initial_energy=initial_energy, Z=40, initial_particle="electron")
@@ -158,7 +158,7 @@ def adj_matrix_study_max_width(initial_energy, n_iter):
     #legend
     proxy1 = mpatches.Patch(color='#4C72B0', label='Before max width')
     proxy2 = mpatches.Patch(color='#55A868', label='After max width')
-    ax.legend(handles=[proxy1, proxy2])
+    ax.legend(handles=[proxy1, proxy2], framealpha=0.8, edgecolor='gray')
 
     # --- Aggiungi textbox con valori medi ± errore per la prima metà ---
     textstr_first = '\n'.join([f'Degree {i}: {degree_means_first[i]:.2f} ± {degree_errors_first[i]:.2f}' for i in range(3)])
@@ -169,7 +169,7 @@ def adj_matrix_study_max_width(initial_energy, n_iter):
     # --- Aggiungi textbox per la seconda metà ---
     textstr_second = '\n'.join([f'Degree {i}: {degree_means_second[i]:.2f} ± {degree_errors_second[i]:.2f}' 
                                 for i in range(3)])
-    ax.text(0.02, 0.80, textstr_second, transform=ax.transAxes,
+    ax.text(0.02, 0.82, textstr_second, transform=ax.transAxes,
             fontsize=10, verticalalignment='top',
             bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='#55A868'))
 
@@ -179,7 +179,7 @@ def adj_matrix_study_max_width(initial_energy, n_iter):
     plt.close()
 
 
-def plot_degree_vs_energy_with_error(initial_energies=None, n_iter=200, depth=40, Z=40):
+def plot_degree_vs_energy_with_error(initial_energies=None, n_iter=100, depth=40, Z=40):
     """
     generate_shower: funzione che restituisce (graph, _, _)
     initial_energies: lista/array di energie
@@ -187,7 +187,7 @@ def plot_degree_vs_energy_with_error(initial_energies=None, n_iter=200, depth=40
     depth, Z: parametri per generate_shower
     """
     if initial_energies is None:
-        initial_energies = np.linspace(10, 1000, 20)
+        initial_energies = np.linspace(10, 1000, 10)
     
     all_freqs = []    # frequenze medie per ogni energia
     all_errors = []   # deviazione standard per ogni energia
@@ -212,7 +212,7 @@ def plot_degree_vs_energy_with_error(initial_energies=None, n_iter=200, depth=40
         freq = degree_means / total_mean
 
         # calcola errore relativo sulle frequenze usando propagazione
-        freq_err = freq * np.sqrt((degree_std / degree_means)**2)  # approssimazione errore
+        freq_err = freq * np.sqrt((degree_std / degree_means)**3) 
 
         all_freqs.append(freq)
         all_errors.append(freq_err)
@@ -233,9 +233,9 @@ def plot_degree_vs_energy_with_error(initial_energies=None, n_iter=200, depth=40
                  capsize=4, capthick=2, elinewidth=1.5)
 
     plt.xlabel("Initial Energy (MeV)", fontsize=12)
-    plt.ylabel("Frequency", fontsize=12)
-    plt.title("Degree Distribution vs Energy (with Std Dev)") #, fontsize=14, fontweight='bold'
-    plt.legend(fontsize=12)
+    plt.ylabel("Degree frequency", fontsize=12)
+    plt.title("Degree frequency vs. Initial energy", fontsize=14) #, fontsize=14, fontweight='bold'
+    plt.legend(framealpha=0.8, edgecolor='gray') #fontsize=12, 
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
     plt.savefig("plots/degree_vs_energy.pdf")
@@ -314,7 +314,7 @@ def level_count(shower):
         "stay_p": "No p interaction"
     }
     patches = [mpatches.Patch(color=color_map[col], label=readable_names[col]) for col in tabella.columns]
-    plt.legend(handles=patches, title="Interaction")
+    plt.legend(handles=patches, framealpha=0.8, edgecolor='gray')
     plt.grid(True)
     plt.tight_layout()
     plt.savefig("plots/interaction_vs_depth.pdf")
@@ -345,7 +345,7 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
             m, err = mean_err(wth)
             if m: widths.append(m); widths_err.append(err)
 
-    def plot(ax, x, y, yerr, title, xlabel, ylabel, fmt, color):
+    """def plot(ax, x, y, yerr, title, xlabel, ylabel, fmt, color):
         ax.errorbar(x, y, yerr=yerr, fmt=fmt, capsize=5, color=color)
         ax.set(title=title, xlabel=xlabel, ylabel=ylabel)
         ax.set_xlabel(xlabel, fontsize=12)
@@ -361,7 +361,7 @@ def shower_study(initial_energy, final_energy, times, energy=True, width=True):
     #plt.savefig("plots/depth_vs_energy.pdf")
     plt.show()
     plt.close()
-
+    """
 
     #Fit the max energy depth
     def log(x, a, b):
@@ -469,14 +469,15 @@ def study_properties(initial_energy, final_energy, times):
         ax.set_xlabel(xlabel, fontsize=12)
         ax.set_ylabel(ylabel, fontsize=12)
         ax.grid(True, linestyle="--", alpha=0.6)
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8,6)) #8,5
+    """fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8,6)) #8,5
     plot(ax1, energies, node, node_err, "# Nodes vs Initial energy", "Initial energy", "# Nodes", 'o-', "orange")
     plot(ax2, energies, edges, edges_err, "# Edges vs Initial energy", "Initial energy", "# Edges", 's--', "orange")
     plt.tight_layout()
     plt.savefig("plots/nodes_edges_vs_energy.pdf")
     plt.show()
-    plt.close()  
-    fig, ax = plt.subplots(figsize=(8, 6), facecolor='white') #8, 5
+    plt.close()
+    """
+    fig, ax = plt.subplots(figsize=(8, 6), facecolor='white') #8, 5 #BOOO
     
     plot(
         ax, energies, depth, depth_err, 
