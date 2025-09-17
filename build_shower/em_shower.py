@@ -95,8 +95,6 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
             for n in neg_buffer:
                 if n.charge !=-1 and n.charge !=2:
                     neg_buffer.remove(n)
-#pos_buffer = [p for p in pos_buffer if p.charge == 1 or p.charge == 2]
-#neg_buffer = [n for n in neg_buffer if n.charge == -1 or n.charge == 2]
 
         history.append(state)
         energy_deposit.append(energy_state)
@@ -106,9 +104,7 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
     energy_for_step = [sum(sub) for sub in energy_deposit]
     shower = nx.DiGraph()
     shower.add_nodes_from(nodes)
-    shower.add_edges_from(edges)
-    #print("nodi totali", counter_int, '\n')
-    #print("link totali", shower.number_of_edges(), '\n')    
+    shower.add_edges_from(edges)  
     states = list(markov_array[0].keys())
     inter_number = len(markov_array)
     sum_matrix={s: {t: 0.0 for t in states} for s in states}

@@ -85,7 +85,7 @@ def adj_matrix_study(initial_energy, n_iter):
     plt.close()
 
 
-def plot_degree_vs_energy_with_error(initial_energies=None, n_iter=200, depth=40, Z=40):
+def plot_degree_vs_energy_with_error(initial_energies=None, n_iter=100, depth=40, Z=40):
     """
     generate_shower: funzione che restituisce (graph, _, _)
     initial_energies: lista/array di energie
@@ -93,7 +93,7 @@ def plot_degree_vs_energy_with_error(initial_energies=None, n_iter=200, depth=40
     depth, Z: parametri per generate_shower
     """
     if initial_energies is None:
-        initial_energies = np.linspace(10, 1000, 20)
+        initial_energies = np.linspace(10, 1000, 10)
     
     all_freqs = []    # frequenze medie per ogni energia
     all_errors = []   # deviazione standard per ogni energia
@@ -118,7 +118,7 @@ def plot_degree_vs_energy_with_error(initial_energies=None, n_iter=200, depth=40
         freq = degree_means / total_mean
 
         # calcola errore relativo sulle frequenze usando propagazione
-        freq_err = freq * np.sqrt((degree_std / degree_means)**2)  # approssimazione errore
+        freq_err = freq * np.sqrt((degree_std / degree_means)**3) 
 
         all_freqs.append(freq)
         all_errors.append(freq_err)
@@ -140,7 +140,7 @@ def plot_degree_vs_energy_with_error(initial_energies=None, n_iter=200, depth=40
 
     plt.xlabel("Initial Energy (MeV)", fontsize=12)
     plt.ylabel("Frequency", fontsize=12)
-    plt.title("Degree Distribution vs Energy (with Std Dev)", fontsize=14, fontweight='bold')
+    plt.title("Degree Distribution vs Energy", fontsize=14, fontweight='bold')
     plt.legend(fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()

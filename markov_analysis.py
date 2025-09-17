@@ -19,34 +19,46 @@ def markov_plot(markov_dic):
     plt.show()
     plt.close()
 
-def analyze_markov_vs_shower( depth=30, initial_energy=300, material_Z=20, n_avg=100):
+def analyze_markov_vs_shower(depth=30, initial_energy=300, material_Z=20, n_avg=1000):
     """
     Analyze correspondence between Markov chain avg Markov simulation and shower graphs.
-    The transition matrix is obtained directly from generate_shower.
-
-    Parameters:
-    -----------
-    generate_shower : function
-        Function that generates a shower and returns (graph, _, transition_matrix)
-    depth : int
-        Depth of generated graphs
-    initial_energy : float
-        Initial particle energy
-    material_Z : int
-        Material Z
-    n_avg Markov simulation : int
-        Number of avg Markov simulation/graphs to simulate
+    The transition matrix is now averaged over n_avg showers.
     """
-    # Generate one shower to get the transition matrix and number of nodes
-    shower, _, transition_matrix = generate_shower(depth=depth, initial_energy=initial_energy,
-                                                   Z=material_Z, initial_particle="electron")
-    states = list(transition_matrix.keys())
-    n_nodes = shower.number_of_nodes()
+    # Initialize structures for averaged transition matrix
+    transition_sum = defaultdict(lambda: defaultdict(float))
+    all_states = set()
+    
+    # Generate n_avg showers to compute average transition matrix
+    for _ in tqdm(range(n_avg), "m_vs_s_0"):
+        _, _, transition_matrix = generate_shower(depth=depth, initial_energy=initial_energy,
+                                                  Z=material_Z, initial_particle="electron")
+        for state, transitions in transition_matrix.items():
+            all_states.add(state)
+            for next_state, prob in transitions.items():
+                all_states.add(next_state)
+                transition_sum[state][next_state] += prob
+    
+    # Normalize to get average probabilities
+    transition_matrix_avg = {}
+    for state in all_states:
+        next_states = transition_sum[state]
+        total = sum(next_states.values())
+        if total > 0:
+            transition_matrix_avg[state] = {s: p / total for s, p in next_states.items()}
+        else:
+            transition_matrix_avg[state] = {s: 1/len(all_states) for s in all_states}  # fallback uniform
+
+    states = list(all_states)
+    
+    # Determine number of nodes from one shower (to set simulation length)
+    shower_example, _, _ = generate_shower(depth=depth, initial_energy=initial_energy,
+                                           Z=material_Z, initial_particle="electron")
+    n_nodes = shower_example.number_of_nodes()
 
     # Function to pick next state in the Markov chain
     def next_state(current):
-        probs = list(transition_matrix[current].values())
-        next_states = list(transition_matrix[current].keys())
+        probs = list(transition_matrix_avg[current].values())
+        next_states = list(transition_matrix_avg[current].keys())
         return random.choices(next_states, weights=probs, k=1)[0]
 
     # Simulate a single Markov chain trajectory
@@ -67,10 +79,12 @@ def analyze_markov_vs_shower( depth=30, initial_energy=300, material_Z=20, n_avg
             state_counts[s].append(counts.get(s, 0))
 
     state_means = {s: np.mean(vals) for s, vals in state_counts.items()}
+    state_stds = {s: np.std(vals) for s, vals in state_counts.items()}
 
-    # Bar plot of average trajectory counts
+    # Plot average trajectory counts with error bars
     plt.figure(figsize=(8, 6))
-    plt.bar(state_means.keys(), state_means.values(), color="skyblue", edgecolor="black")
+    plt.bar(state_means.keys(), state_means.values(), yerr=[state_stds[s] for s in state_means.keys()],
+            color="skyblue", edgecolor="black", capsize=5)
     plt.xlabel("States")
     plt.ylabel("Average appearances")
     plt.title(f"Average state frequency over {n_avg} Avg Markov simulation ({n_nodes} steps)")
@@ -79,7 +93,7 @@ def analyze_markov_vs_shower( depth=30, initial_energy=300, material_Z=20, n_avg
 
     # Count "kind" from shower graphs
     kind_counts = defaultdict(list)
-    for _ in range(n_avg ):
+    for _ in tqdm(range(n_avg), desc="m_vs_s_1"):
         shower, _, _ = generate_shower(depth=depth, initial_energy=initial_energy,
                                        Z=material_Z, initial_particle="electron")
         kinds = list(nx.get_node_attributes(shower, "kind").values())
@@ -88,42 +102,118 @@ def analyze_markov_vs_shower( depth=30, initial_energy=300, material_Z=20, n_avg
             kind_counts[label].append(count)
     
     kind_means = {k: np.mean(v) for k, v in kind_counts.items()}
+    kind_stds = {k: np.std(v) for k, v in kind_counts.items()}
 
     # Compare trajectory vs shower values
     types = list(state_means.keys())
     traj_values = [state_means[t] for t in types]
+    traj_err = [state_stds[t] for t in types]
     shower_values = [kind_means.get(t, 0) for t in types]
+    shower_err = [kind_stds.get(t, 0) for t in types]
 
     x = np.arange(len(types))
     width = 0.35
 
     plt.figure(figsize=(10,6))
-    plt.bar(x - width/2, traj_values, width, label='Avg Markov simulation', color='skyblue', edgecolor='black')
-    plt.bar(x + width/2, shower_values, width, label='Shower', color='salmon', edgecolor='black')
+    plt.bar(x - width/2, traj_values, width, yerr=traj_err, label='Avg Markov simulation', 
+            color='skyblue', edgecolor='black', capsize=5)
+    plt.bar(x + width/2, shower_values, width, yerr=shower_err, label='Shower', 
+            color='salmon', edgecolor='black', capsize=5)
     plt.xticks(x, types)
     plt.ylabel("Average appearances")
-    plt.title("Comparison of average appearances per type")
+    plt.title("Comparison of average appearances per type with error bars")
     plt.legend()
     plt.grid(axis="y", linestyle="--", alpha=0.7)
     plt.show()
 
-    # Relative frequencies
+    # Relative frequencies with error bars
     traj_freq = np.array(traj_values) / np.sum(traj_values)
     shower_freq = np.array(shower_values) / np.sum(shower_values)
+    
+    traj_freq_err = np.array(traj_err) / np.sum(traj_values)
+    shower_freq_err = np.array(shower_err) / np.sum(shower_values)
 
-    plt.figure(figsize=(10,5))
-    plt.bar(x - width/2, traj_freq, width, label='Avg Markov simulation', color='skyblue', edgecolor='black')
-    plt.bar(x + width/2, shower_freq, width, label='Shower', color='salmon', edgecolor='black')
+    plt.figure(figsize=(7,5))
+    plt.bar(x - width/2, traj_freq, width, yerr=traj_freq_err, label='Avg Markov simulation',
+            color='skyblue', edgecolor='black', capsize=5)
+    plt.bar(x + width/2, shower_freq, width, yerr=shower_freq_err, label='Shower',
+            color='salmon', edgecolor='black', capsize=5)
     plt.xticks(x, types)
     plt.ylabel("Relative frequency")
-    plt.title("Comparison of relative frequencies per type")
+    plt.title("Comparison of relative frequencies per type (energy of 300 MeV)")
     plt.legend()
     plt.grid(axis="y", linestyle="--", alpha=0.7)
     plt.savefig("plots/markov_vs_shower.pdf")
     plt.show()
     plt.close()
 
-    return state_means, kind_means, traj_freq, shower_freq
+    return state_means, kind_means, traj_freq, shower_freq, transition_matrix_avg
+
+
+
+def markov_power(markov_matrix, pow):
+    states = list(markov_matrix.keys())
+    n = len(states)
+
+    # costruisci la matrice numpy
+    mat = np.zeros((n, n))
+    for i, s in enumerate(states):
+        for j, t in enumerate(states):
+            mat[i, j] = markov_matrix[s].get(t, 0.0)
+
+    # eleva la matrice a potenza k
+    mat_k = np.linalg.matrix_power(mat, pow)
+
+    # ricostruisci un dict nello stesso formato
+    powered_dict = {
+        states[i]: {states[j]: mat_k[i, j] for j in range(n)} 
+        for i in range(n)
+    }
+    
+
+    df = pd.DataFrame(powered_dict).T  
+    plt.figure(figsize=(8,6))
+    sns.heatmap(df, annot=True, fmt=".2f", cmap="viridis", cbar=True)
+    plt.xlabel("Final state")
+    plt.ylabel("Initial state")
+    plt.title(f"Averaged transition matrix raised to the {pow}th")
+    plt.savefig("plots/Markov_power.pdf")
+    plt.show()
+    plt.close()
+
+
+def stationary_vector(norm):
+    # Lista ordinata degli stati
+    states = list(norm.keys())
+
+    # Costruzione della matrice
+    P = np.array([[norm[row][col] for col in states] for row in states], dtype=float)
+
+    # Normalizzazione riga per riga
+    P = P / P.sum(axis=1, keepdims=True)
+
+    def stationary_distribution(P, tol=1e-12, max_iter=10000):
+        """
+        Calcola il vettore stazionario di una catena di Markov a partire dalla matrice P.
+        """
+        n = P.shape[0]
+        pi = np.ones(n) / n  # distribuzione iniziale uniforme
+        
+        for _ in range(max_iter):
+            pi_next = pi @ P
+            if np.linalg.norm(pi_next - pi, 1) < tol:
+                return pi_next
+            pi = pi_next
+        return pi
+
+    # Calcolo del vettore stazionario
+    pi = stationary_distribution(P)
+
+    # Stampa risultato con etichette
+    print("Vettore stazionario:")
+    for s, val in zip(states, pi):
+        print(f"{s}: {val:.4f}")
+    print("Somma =", pi.sum())
 
 #centrality measures
 def centrality_meas(graph, kind="in_degree", show=True):
