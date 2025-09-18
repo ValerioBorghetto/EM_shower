@@ -7,6 +7,7 @@ from tqdm import tqdm
 import pandas as pd
 import seaborn as sns
 from collections import defaultdict, Counter
+from scipy.stats import chi2
 
 def markov_plot(markov_dic):
     df = pd.DataFrame(markov_dic).T  
@@ -20,7 +21,7 @@ def markov_plot(markov_dic):
     plt.show()
     plt.close()
 
-def analyze_markov_vs_shower(depth=30, initial_energy=300, material_Z=20, n_avg=1000):
+def analyze_markov_vs_shower(depth=30, initial_energy=1000, material_Z=20, n_avg=5000):
     """
     Analyze correspondence between Markov chain avg Markov simulation and shower graphs.
     The transition matrix is now averaged over n_avg showers.
@@ -135,9 +136,21 @@ def analyze_markov_vs_shower(depth=30, initial_energy=300, material_Z=20, n_avg=
     # Relative frequencies with error bars
     traj_freq = np.array(traj_values) / np.sum(traj_values)
     shower_freq = np.array(shower_values) / np.sum(shower_values)
-    
+    # Errori normalizzati
     traj_freq_err = np.array(traj_err) / np.sum(traj_values)
     shower_freq_err = np.array(shower_err) / np.sum(shower_values)
+    
+    # Chi-2
+    chi2_bins = (traj_freq - shower_freq)**2 / (traj_freq_err**2 + shower_freq_err**2)
+    chi2_sum = np.sum(chi2_bins)
+    dof = len(shower_freq) - 1
+    chi2_reduced = chi2_sum / dof
+
+    print("Chi2 per bin:", chi2_bins)
+    print("Chi2 totale:", chi2_sum)
+    print("Chi2 ridotto:", chi2_reduced)
+    p_value = 1 - chi2.cdf(chi2_sum, df=dof)
+    print("p-value:", p_value)
 
     plt.figure(figsize=(8, 6)) #10,5
     plt.bar(x - width/2, traj_freq, width, yerr=traj_freq_err, label='Avg Markov simulation',

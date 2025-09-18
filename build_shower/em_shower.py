@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from build_shower.em_utils import *
 
 #costanti fisiche#####
-E_cut=2.5 #1.3 #(per il confronto con la markov) #MeV, sotto questa soglia l'energia si deposita
+E_cut=1.3 #(per il confronto con la markov) #MeV, sotto questa soglia l'energia si deposita
 ##################################
 
 #genera la shower, partendo da un bremsstralung

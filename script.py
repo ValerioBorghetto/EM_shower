@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import time
 
 ###settings###########
-initial_energy=300  #(MeV), >10 for relativistic limit
+initial_energy=1000  #(MeV), >10 for relativistic limit
 depth=40            #Maximum depth of the material
 material_Z=40       #work in progress
 ####################
@@ -24,7 +24,7 @@ shower, energy_deposed, norm=generate_shower(depth=depth, initial_energy=initial
 end_time = time.time()
 execution_time = end_time - start
 print(f"Execution time: {execution_time} seconds")
-
+"""
 #plot the shower
 plot_shower(shower, tree=True, color=True) #tree decide se vuoi la raffigurazione ad albero, color se vuoi gli edges colorati
 
@@ -61,4 +61,6 @@ plot_degree_vs_energy_with_error()
 
 analyze_markov_vs_shower()
 
-#stationary_vector(norm) 
+#stationary_vector(norm)
+"""
+stationary_vector(norm)
