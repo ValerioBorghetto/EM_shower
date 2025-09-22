@@ -13,10 +13,6 @@ The model is based on 5 possible interactions:
 The first three are the possible processes for an electron (or positron), while the remaining two are for a photon. At each step, for every particle, one of the possible processes is selected (the underlying idea is a Markov process). The choice depends on various probabilities, which are calculated at each step based on the particle’s energy (the dependence on the material has not yet been implemented). At each step, the energy is transferred from the parent particles to the daughter particles, halving at each iteration. When the energy falls below a certain threshold, it is absorbed by the target.
 The network is built using interactions as nodes and particles as links, in order to better simulate the propagation of the cascade in the material.
 
-# Analysis of the simulation
-
-Work in progress
-
 ## Requirements
 
 To run this project, simply execute the `script.py` file. You then need the following Python packages:
@@ -36,4 +32,5 @@ To run this project, simply execute the `script.py` file. You then need the foll
     ```
 - [tqdm](https://github.com/tqdm/tqdm)
 - [Pandas](https://pandas.pydata.org/)
+- [Seaborn](https://seaborn.pydata.org/)
 

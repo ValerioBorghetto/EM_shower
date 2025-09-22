@@ -5,35 +5,32 @@ from build_shower.em_shower import *
 from shower_analysis import *
 from markov_analysis import *
 import matplotlib.pyplot as plt
-
 import time
 
-###settings###########
-initial_energy=1000  #(MeV), >10 for relativistic limit
+###Settings###########
+initial_energy=300  #(MeV), >10 for relativistic limit
 depth=40            #Maximum depth of the material
 material_Z=40       #work in progress
 ####################
 
-#markov chain: nodo=stato, link= transizione possibile tra stati. ad ogni stato è associata una probabilità di transizione 
-
+#execution time
 start=time.time()
 #generate the shower
 shower, energy_deposed, norm=generate_shower(depth=depth, initial_energy=initial_energy, Z=material_Z, initial_particle="electron") #30--->2 seconds
-
-#execution time
 end_time = time.time()
 execution_time = end_time - start
 print(f"Execution time: {execution_time} seconds")
-"""
+
 #plot the shower
-plot_shower(shower, tree=True, color=True) #tree decide se vuoi la raffigurazione ad albero, color se vuoi gli edges colorati
+plot_shower(shower, tree=True, color=True)
 
+#study of the out-degrees
+#out_degree_study(300, 50)
+out_degree_study_max_width(300, 50)
+#degree vs energy values
+plot_degree_vs_energy_with_error()
 
-#study of the adjacency matrix 
-#adj_matrix_study(300, 50)
-adj_matrix_study_max_width(300, 50)
-
-#study of the shower properties
+#study of the shower properties:
 #plot deposited energy
 plot_energy(energy_deposed)
 #plot different interaction kinds occurrence
@@ -43,24 +40,19 @@ plot_width(shower)
 #plot the occurrence of each interaction per shower level
 level_count(shower)
 
-
-#study the mean values over different initial energy values
+#draw the mean transition matrix
 draw_markov(norm)
-shower_study(10, 1000, 10, energy=True, width=True)
-
-#markov analysis
-study_properties(10, 1000, 10)
-
-interaction_show()
-
-network_degree(300)
-
 markov_plot(norm)
 
-plot_degree_vs_energy_with_error()
+#study the mean values over different initial energy values
+shower_study(10, 1000, 10, energy=True, width=True)
 
+#markov transition and network analysis
+study_properties(10, 1000, 10)
+
+#study tree properties
+network_degree(300)
+
+#average markov simulation vs shower simulation
 analyze_markov_vs_shower()
 
-#stationary_vector(norm)
-"""
-stationary_vector(norm)

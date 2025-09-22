@@ -5,40 +5,34 @@ import matplotlib.patches as mpatches
 
 #plot adj. matrix
 def plot_adjacency_matrix(adj_matrix, title="Adjacency Matrix", labels=[]): 
-    plt.figure(figsize=(8,6)) #figsize=(6,6)
+    plt.figure(figsize=(8,6)) 
     plt.imshow(adj_matrix, cmap='gray_r', interpolation='none')
     plt.title(title)
     plt.colorbar(label="Edge Weight")
-    # Imposta le etichette per righe e colonne
-    plt.xticks(np.arange(len(labels)), labels, rotation=90)  # Etichette per le colonne
-    plt.yticks(np.arange(len(labels)), labels)               # Etichette per le righe
+    plt.xticks(np.arange(len(labels)), labels, rotation=90) 
+    plt.yticks(np.arange(len(labels)), labels)             
     plt.tight_layout()
     filename = f"plots/{title.replace(' ', '_')}.pdf" 
-    plt.savefig(filename) #Adiacency matrix
+    plt.savefig(filename)
     plt.show()
     plt.close()
 
+#plot the shower
 def plot_shower(shower, tree=False, color=False, size=80):
-    # Setup posizione dei nodi
     pos = nx.nx_agraph.graphviz_layout(shower, prog='dot') if tree else nx.spring_layout(shower)
-
-    # Mappa colori per tipi di kind
     color_map = {
-        "brems": "#FF0000",    # rosso  
-        "ann":   "#FFA500",    # arancione
-        "stay_e":"#FFD700",    # giallo
-        "pp":    "#003FAB",    # blu scuro
-        "stay_p": "#87CEEB",    # azzurro
+        "brems": "#FF0000",    # red  
+        "ann":   "#FFA500",    # orange
+        "stay_e":"#FFD700",    # yellow
+        "pp":    "#003FAB",    # dark blue
+        "stay_p": "#87CEEB",    # light blue
     }
-
-    # Colori per i nodi se richiesto
     if color:
         node_kinds = nx.get_node_attributes(shower, "kind")
         node_colors = [color_map.get(node_kinds.get(n), "#CCCCCC") for n in shower.nodes]
     else:
         node_colors = "skyblue"
 
-    # Disegno del grafo
     plt.figure(figsize=(14, 10)) 
     nx.draw(
         shower, pos,
@@ -49,10 +43,9 @@ def plot_shower(shower, tree=False, color=False, size=80):
         font_size=8,
         arrows=True
     )
-    plt.title("EM shower") #, fontsize=14
+    plt.title("EM shower") 
     plt.axis('off')
     plt.tight_layout()
-    # Legenda se color è attivo
     readable_names = {
         "brems": "Bremsstrahlung",
         "pp": "Pair Production",
@@ -70,44 +63,30 @@ def plot_shower(shower, tree=False, color=False, size=80):
         plt.savefig("plots/shower.pdf")
         plt.show()
         plt.close()
-
     else:
         plt.savefig("plots/shower2.pdf")
 
+#plot energy deposed vs the step of the tree
 def plot_energy(energy_deposed):
     x = np.arange(len(energy_deposed))
-
-    # --- Preparazione figura ---
-    fig, ax = plt.subplots(figsize=(8, 6)) #(7, 5)
-
-    # linea più chiara sotto
+    fig, ax = plt.subplots(figsize=(8, 6)) 
     ax.plot(
         x, energy_deposed, "--",
         color="firebrick", linewidth=2, zorder=1
     )
-
-    # punti con evidenza sopra
     ax.plot(
         x, energy_deposed, "D",
         color="darkred", markersize=5,
         label="Deposited Energy", zorder=2
     )
-
-    # --- Stile e testi ---
-    ax.set_title("Deposited energy per step", fontsize=14) #, fontsize=18, weight="bold"
+    ax.set_title("Deposited energy per step", fontsize=14) 
     ax.set_xlabel("Step", fontsize=12)
     ax.set_ylabel("Deposited energy (MeV)", fontsize=12)
     ax.grid(True, linestyle="--", alpha=0.6)
-    #ax.legend()
-
-    # --- Stile globale coerente ---
     plt.tight_layout()
     plt.savefig("plots/Energy_deposited.pdf")
     plt.show()
     plt.close()
-
-
-
 
 #is symmetric?
 def is_symmetric(A):
