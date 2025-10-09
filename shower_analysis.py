@@ -407,3 +407,381 @@ def network_degree(initial_energy, n_iter=100):
     print("Diameter:", sum(diameter_list)/n_iter)
 
 
+# ================================
+# Analysis & plotting for showers
+# ================================
+from typing import Callable, Dict, List, Tuple, Optional
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import networkx as nx
+
+
+def analyze_markov_models(
+    markov_models: List[str],
+    N: int = 100,
+    depth: int = 40,
+    initial_energy: float = 1000.0,
+    Z: int = 40,
+    initial_particle: str = "electron",
+    attribute_name: Optional[str] = None,
+    bar_plot_labels: Tuple[str, str] = ("Before max width", "After max width"),
+    save_dir: Optional[str] = "plots",
+) -> Dict[str, dict]:
+    """
+    - Runs N showers per markov model.
+    - For each model, aggregates counts of nodes with out-degree 0/1/2 (mean & std).
+    - Plots:
+        1) Bar plot (your exact "split at max width" style) for *two* models.
+        2) Metrics plot (solid line + dots, your 'plot()' style).
+    - Computes per-model:
+        Average clustering, Degree assortativity, Branching factor, Attribute assortativity.
+
+    Returns a dict with the aggregated values.
+    """
+
+    # ---------- helpers ----------
+    def _is_digraph(G) -> bool:
+        return isinstance(G, (nx.DiGraph, nx.MultiDiGraph))
+
+    def _out_degrees(G):
+        # treat undirected degree as "out-degree" if G is undirected
+        return dict(G.out_degree()) if _is_digraph(G) else dict(G.degree())
+
+    def _count_outdeg_categories(G, cats=(0, 1, 2)) -> Dict[int, int]:
+        degs = _out_degrees(G).values()
+        counts = {c: 0 for c in cats}
+        for d in degs:
+            if d in counts:
+                counts[d] += 1
+        return counts
+
+    def _avg_clustering(G):
+        UG = G.to_undirected() if _is_digraph(G) else G
+        if len(UG) <= 1:
+            return np.nan
+        return nx.average_clustering(UG)
+
+    def _degree_assortativity(G):
+        # Your requested function
+        return nx.degree_assortativity_coefficient(G)
+
+    def _branching_factor(G):
+        # average out-degree among nodes with out-degree > 0
+        degs = _out_degrees(G)
+        positives = [d for d in degs.values() if d > 0]
+        if not positives:
+            return 0.0
+        return float(np.mean(positives))
+
+    def _attribute_assortativity(G, attr: Optional[str]):
+        return nx.attribute_assortativity_coefficient(G, "kind")
+
+    # ---------- run ----------
+    outdeg_counts_by_model = {m: [] for m in markov_models}
+    metrics_by_model = {
+        m: {
+            "avg_clustering": [],
+            "degree_assortativity": [],
+            "branching_factor": [],
+            "attribute_assortativity": [],
+        }
+        for m in markov_models
+    }
+
+    for model in markov_models:
+        for _ in range(N):
+            G, energy_deposed, norm = generate_shower(
+                depth=depth,
+                initial_energy=initial_energy,
+                Z=Z,
+                initial_particle=initial_particle,
+                markov_model=model,
+            )
+
+            outdeg_counts_by_model[model].append(_count_outdeg_categories(G, cats=(0, 1, 2)))
+
+            metrics_by_model[model]["avg_clustering"].append(_avg_clustering(G))
+            metrics_by_model[model]["degree_assortativity"].append(_degree_assortativity(G))
+            metrics_by_model[model]["branching_factor"].append(_branching_factor(G))
+            metrics_by_model[model]["attribute_assortativity"].append(_attribute_assortativity(G, attribute_name))
+
+    # ---------- aggregate ----------
+    outdeg_stats = {}
+    for model, cnt_list in outdeg_counts_by_model.items():
+        arr0 = np.array([c[0] for c in cnt_list], dtype=float)
+        arr1 = np.array([c[1] for c in cnt_list], dtype=float)
+        arr2 = np.array([c[2] for c in cnt_list], dtype=float)
+        outdeg_stats[model] = {
+            "mean": {0: float(np.nanmean(arr0)), 1: float(np.nanmean(arr1)), 2: float(np.nanmean(arr2))},
+            "std":  {0: float(np.nanstd(arr0, ddof=1)), 1: float(np.nanstd(arr1, ddof=1)), 2: float(np.nanstd(arr2, ddof=1))},
+        }
+
+    metrics_summary = {}
+    for model, mdict in metrics_by_model.items():
+        summary = {}
+        for k, vals in mdict.items():
+            a = np.array(vals, dtype=float)
+            if np.all(np.isnan(a)):
+                summary[k] = (np.nan, np.nan)
+            else:
+                summary[k] = (float(np.nanmean(a)), float(np.nanstd(a, ddof=1)))
+        metrics_summary[model] = summary
+
+    # ==================================================
+    # PLOT 1 — BAR: your exact “split at max width” style
+    # (works when there are exactly TWO models)
+    # ==================================================
+    if len(markov_models) == 2:
+        labels = ["0", "1", "2"]
+        x = np.arange(len(labels))
+        width = 0.35
+
+        m1, m2 = markov_models
+        degree_means_first = np.array([outdeg_stats[m1]["mean"][k] for k in [0, 1, 2]], dtype=float)
+        degree_errors_first = np.array([outdeg_stats[m1]["std"][k] for k in [0, 1, 2]], dtype=float)
+        degree_means_second = np.array([outdeg_stats[m2]["mean"][k] for k in [0, 1, 2]], dtype=float)
+        degree_errors_second = np.array([outdeg_stats[m2]["std"][k] for k in [0, 1, 2]], dtype=float)
+
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.bar(
+            x - width/2, degree_means_first, width,
+            yerr=degree_errors_first, label='_nolegend_',
+            color='#4C72B0', edgecolor='black', alpha=0.8, capsize=5,
+            error_kw={'elinewidth': 1.2, 'ecolor': 'black'}
+        )
+        ax.bar(
+            x + width/2, degree_means_second, width,
+            yerr=degree_errors_second, label='_nolegend_',
+            color='#55A868', edgecolor='black', alpha=0.8, capsize=5,
+            error_kw={'elinewidth': 1.2, 'ecolor': 'black'}
+        )
+
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, fontsize=12)
+        ax.set_ylabel("Occurrence", fontsize=12)
+        ax.set.xlabel("Out-Degree", fontsize=12)
+        ax.set_title("Out-Degree Distribution split at max width", fontsize=14)
+        ax.yaxis.grid(True, linestyle='--', alpha=0.6)
+
+        proxy1 = mpatches.Patch(color='#4C72B0', label=bar_plot_labels[0])
+        proxy2 = mpatches.Patch(color='#55A868', label=bar_plot_labels[1])
+        ax.legend(handles=[proxy1, proxy2], framealpha=0.8, edgecolor='gray')
+
+        textstr_first = '\n'.join([f'Degree {i}: {degree_means_first[i]:.2f} ± {degree_errors_first[i]:.2f}' for i in range(3)])
+        ax.text(0.02, 0.95, textstr_first, transform=ax.transAxes,
+                fontsize=10, verticalalignment='top',
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='#4C72B0'))
+
+        textstr_second = '\n'.join([f'Degree {i}: {degree_means_second[i]:.2f} ± {degree_errors_second[i]:.2f}' for i in range(3)])
+        ax.text(0.02, 0.82, textstr_second, transform=ax.transAxes,
+                fontsize=10, verticalalignment='top',
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='#55A868'))
+
+        plt.tight_layout()
+        if save_dir:
+            import os
+            os.makedirs(save_dir, exist_ok=True)
+            plt.savefig(f"{save_dir}/out_degree_comparison.pdf")
+        plt.show()
+        plt.close()
+    else:
+        # Fallback: grouped bars across many models (kept simple)
+        categories = [0, 1, 2]
+        x = np.arange(len(categories))
+        width = 0.8 / max(1, len(markov_models))
+        fig1, ax1 = plt.subplots(figsize=(9, 6), facecolor="white")
+        palette = ["#4C72B0", "#55A868", "#C44E52", "#8172B2", "#64B5CD", "#CCB974"]
+        for i, model in enumerate(markov_models):
+            means = [outdeg_stats[model]["mean"][c] for c in categories]
+            stds  = [outdeg_stats[model]["std"][c] for c in categories]
+            xshift = x + i * width - (len(markov_models) - 1) * width / 2
+            ax1.bar(xshift, means, width, yerr=stds, capsize=5,
+                    color=palette[i % len(palette)], edgecolor='black',
+                    alpha=0.85, error_kw={'elinewidth':1.2, 'ecolor':'black'}, label=model)
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(["0", "1", "2"], fontsize=12)
+        ax1.set_ylabel("Occurrence", fontsize=12)
+        ax1.set_xlabel("Out-Degree", fontsize=12)
+        ax1.set_title("Out-Degree Distribution by Model", fontsize=14)
+        ax1.yaxis.grid(True, linestyle='--', alpha=0.6)
+        ax1.legend(framealpha=0.85, edgecolor='gray')
+        plt.tight_layout()
+        if save_dir:
+            import os
+            os.makedirs(save_dir, exist_ok=True)
+            plt.savefig(f"{save_dir}/out_degree_by_model.pdf")
+        plt.show()
+        plt.close()
+
+    # ==================================================
+    # PLOT 2 — METRICS: solid lines + dots (same color)
+    # ==================================================
+    # Your plotting helper (solid line)
+    def plot(ax, x, y, yerr, title, xlabel, ylabel, color="darkblue"):
+        ax.plot(x, y, "-", color=color, linewidth=2, zorder=1)  # SOLID line
+        ax.errorbar(
+            x, y, yerr=yerr, fmt="o",
+            capsize=6, elinewidth=2,
+            ecolor=color, color=color,
+            markersize=4, zorder=2
+        )
+        ax.set_title(title, fontsize=14)
+        ax.set_xlabel(xlabel, fontsize=12)
+        ax.set_ylabel(ylabel, fontsize=12)
+        ax.grid(True, linestyle="--", alpha=0.6)
+
+    model_x = np.arange(len(markov_models))
+
+    def _mvals(key):
+        means = [metrics_summary[m][key][0] for m in markov_models]
+        stds  = [metrics_summary[m][key][1] for m in markov_models]
+        return np.array(means, float), np.array(stds, float)
+
+    ac_mean, ac_std = _mvals("avg_clustering")
+    da_mean, da_std = _mvals("degree_assortativity")
+    bf_mean, bf_std = _mvals("branching_factor")
+    aa_mean, aa_std = _mvals("attribute_assortativity")
+
+    fig2, ax2 = plt.subplots(figsize=(8, 6), facecolor='white')
+    #plot(ax2, model_x, ac_mean, ac_std, "Graph properties vs. Markov model", "Model", "Value", color="red")
+    plot(ax2, model_x, da_mean, da_std, "Graph properties vs. Markov model", "Model", "Value", color="green")
+    plot(ax2, model_x, bf_mean, bf_std, "Graph properties vs. Markov model", "Model", "Value", color="gold")  # yellow lines can be hard to see; 'gold' reads better
+    plot(ax2, model_x, aa_mean, aa_std, "Graph properties vs. Markov model", "Model", "Value", color="blue")
+
+    ax2.set_xticks(model_x)
+    ax2.set_xticklabels(markov_models, rotation=0)
+
+    # Legend with matching colors
+    handles = [
+        #plt.Line2D([0], [0], color="red",  marker="o", linestyle="-", linewidth=2, markersize=4, label="Average clustering"),
+        plt.Line2D([0], [0], color="green",marker="o", linestyle="-", linewidth=2, markersize=4, label="Degree assortativity"),
+        plt.Line2D([0], [0], color="gold", marker="o", linestyle="-", linewidth=2, markersize=4, label="Branching factor"),
+        plt.Line2D([0], [0], color="blue", marker="o", linestyle="-", linewidth=2, markersize=4, label="Attribute assortativity"),
+    ]
+    leg2 = ax2.legend(handles=handles, framealpha=0.85, edgecolor='gray', loc="best")
+
+    plt.tight_layout()
+    if save_dir:
+        import os
+        os.makedirs(save_dir, exist_ok=True)
+        plt.savefig(f"{save_dir}/metrics_vs_model.pdf")
+    plt.show()
+    plt.close()
+
+    return {"outdeg_stats": outdeg_stats, "metrics": metrics_summary}
+
+
+def network_prop(initial_energy, final_energy, times, n_iter=100, save_dir="plots"):
+    """
+    Study degree assortativity, branching factor, and attribute assortativity 
+    of showers as a function of the initial energy.
+
+    Parameters
+    ----------
+    initial_energy : float
+        Starting value for the energy range (MeV).
+    final_energy : float
+        Final value for the energy range (MeV).
+    times : int
+        Number of energy levels to evaluate between initial and final energy.
+    n_iter : int, optional
+        Number of shower realizations per energy level (default=100).
+    save_dir : str, optional
+        Directory to save plots (default='plots').
+    """
+
+    def mean_err(data):
+        """Compute mean and standard error of the mean."""
+        data = np.array(data, dtype=float)
+        return np.mean(data), np.std(data, ddof=1) / np.sqrt(len(data))
+
+    def branching_factor(G):
+        """Compute average branching factor = mean(out-degree of non-leaf nodes)."""
+        out_degrees = [d for _, d in G.out_degree() if d > 0]
+        return np.mean(out_degrees) if out_degrees else 0.0
+
+    def attribute_assortativity(G, attr="step"):
+        """Compute assortativity based on a given node attribute."""
+        try:
+            return nx.attribute_assortativity_coefficient(G, attr)
+        except Exception:
+            return np.nan
+
+    # Arrays for energies and metrics
+    energies = np.linspace(initial_energy, final_energy, times)
+    da_mean, da_err = [], []
+    bf_mean, bf_err = [], []
+    aa_mean, aa_err = [], []
+
+    for e in tqdm(energies, desc="Computing network metrics"):
+        deg_assort, branch_fact, attr_assort = [], [], []
+
+        for _ in range(n_iter):
+            shower, _, _ = generate_shower(
+                depth=40, initial_energy=e, Z=10, initial_particle="electron"
+            )
+
+            # Compute metrics safely
+            try:
+                da = nx.degree_assortativity_coefficient(shower)
+            except Exception:
+                da = np.nan
+
+            bf = branching_factor(shower)
+            aa = attribute_assortativity(shower, "step")
+
+            deg_assort.append(da)
+            branch_fact.append(bf)
+            attr_assort.append(aa)
+
+        # Mean and error for each metric
+        m, err = mean_err(deg_assort)
+        da_mean.append(m); da_err.append(err)
+        m, err = mean_err(branch_fact)
+        bf_mean.append(m); bf_err.append(err)
+        m, err = mean_err(attr_assort)
+        aa_mean.append(m); aa_err.append(err)
+
+    # Plot helper
+    def plot(ax, x, y, yerr, title, xlabel, ylabel, color="darkblue"):
+        ax.plot(x, y, "-", color=color, linewidth=2, zorder=1)
+        ax.errorbar(
+            x, y, yerr=yerr, fmt="o",
+            capsize=6, elinewidth=2,
+            ecolor=color, color=color,
+            markersize=4, zorder=2
+        )
+        ax.set_title(title, fontsize=14)
+        ax.set_xlabel(xlabel, fontsize=12)
+        ax.set_ylabel(ylabel, fontsize=12)
+        ax.grid(True, linestyle="--", alpha=0.6)
+
+    # --- Plot all metrics together ---
+    fig, ax = plt.subplots(figsize=(8, 6), facecolor='white')
+
+    plot(ax, energies, da_mean, da_err, "", "Initial energy (MeV)", "Metric value", color="green")
+    plot(ax, energies, bf_mean, bf_err, "", "Initial energy (MeV)", "Metric value", color="gold")
+    plot(ax, energies, aa_mean, aa_err, "", "Initial energy (MeV)", "Metric value", color="blue")
+
+    handles = [
+        plt.Line2D([0], [0], color="green", marker="o", linestyle="-", linewidth=2, markersize=4, label="Degree assortativity"),
+        plt.Line2D([0], [0], color="gold", marker="o", linestyle="-", linewidth=2, markersize=4, label="Branching factor"),
+        plt.Line2D([0], [0], color="blue", marker="o", linestyle="-", linewidth=2, markersize=4, label="Attribute assortativity"),
+    ]
+    ax.legend(handles=handles, framealpha=0.85, edgecolor='gray', loc="best")
+    ax.set_title("Network metrics vs. Initial energy", fontsize=14)
+
+    plt.tight_layout()
+    import os
+    os.makedirs(save_dir, exist_ok=True)
+    plt.savefig(f"{save_dir}/metrics_vs_energy.pdf")
+    plt.show()
+    plt.close()
+
+    return {
+        "energies": energies,
+        "degree_assortativity": (np.array(da_mean), np.array(da_err)),
+        "branching_factor": (np.array(bf_mean), np.array(bf_err)),
+        "attribute_assortativity": (np.array(aa_mean), np.array(aa_err)),
+    }

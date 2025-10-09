@@ -8,7 +8,7 @@ E_cut=2.5 #MeV     below this energy value, the particle is absorbed by the mate
 ##################################
 
 #generate the shower
-def generate_shower(depth, initial_energy, Z, initial_particle):
+def generate_shower(depth, initial_energy, Z, initial_particle, markov_model="model"):
     """
     depth = int; it is the maximum depth that the shower can reach
     intial_energy = int; the initial energy in MeV of the cascade
@@ -45,7 +45,7 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
             if old_inter.energy<E_cut:
                 energy_state.append(old_inter.energy)
             elif old_inter.kind == "brems":
-                prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "brems")
+                prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "brems", markov_model)
                 if old_inter.charge == +1: #positron
                     positron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep,state, old_inter.charge, energy[0])
                     substep += 1
@@ -58,7 +58,7 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
                     substep += 1
             elif old_inter.kind == "pp": 
                 charge=old_inter.charge
-                prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "pp")
+                prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "pp", markov_model)
                 if charge==2:
                     #positron
                     new_charge=+1
@@ -76,16 +76,16 @@ def generate_shower(depth, initial_energy, Z, initial_particle):
                     new_charge=-1
                     electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, nodes, edges, step, substep, state, new_charge, energy[1])
             elif old_inter.kind == "ann":
-                prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "ann")
+                prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "ann", markov_model)
                 photon_decay(nodes, edges, prob, old_inter, state, step, substep, energy[0])
                 substep += 1
                 photon_decay(nodes, edges, prob, old_inter, state, step, substep, energy[1])
             elif old_inter.kind=="stay_p": 
-                prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "stay_p")
+                prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "stay_p", markov_model)
                 photon_decay(nodes, edges, prob, old_inter, state, step, substep, old_inter.energy*0.8) 
                 substep += 1
             elif old_inter.kind == "stay_e": 
-                prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "stay_e")
+                prob, energy= energy_division(old_inter.energy, Z, old_interactions, neg_buffer, "stay_e", markov_model)
                 charge=old_inter.charge
                 if charge==+1:
                     #positron

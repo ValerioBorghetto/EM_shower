@@ -38,14 +38,41 @@ def ann_probab(E0, Z, buffer, old_interactions): #probability depends on the num
     return np.clip(len(buffer)/len(old_interactions), 0, 1)
 
 #generate the transition matrix
-def build_markov(lepton_energy, photon_energy, Z, buffer, old_interactions):
-    p_eb = bremss_probab(lepton_energy, Z)                          # electron → brems
-    p_ea = ann_probab(lepton_energy, Z, buffer, old_interactions)   # electron → annihilation
-    if (p_ea+p_eb<1):
-        p_es = 1-p_eb - p_ea                                        # electron → stay_e
-    else: p_es=0
-    p_pp = pairprod_probab(photon_energy, Z)                        # photon → pair production
-    p_ps = 1-p_pp                                                   # photon → stay_p
+def build_markov(lepton_energy, photon_energy, Z, buffer, old_interactions, type="model"):
+    if type == "model":
+        p_eb = bremss_probab(lepton_energy, Z)                          # electron → brems
+        p_ea = ann_probab(lepton_energy, Z, buffer, old_interactions)   # electron → annihilation
+        if (p_ea+p_eb<1):
+            p_es = 1-p_eb - p_ea                                        # electron → stay_e
+        else: p_es=0
+        p_pp = pairprod_probab(photon_energy, Z)                        # photon → pair production
+        p_ps = 1-p_pp                                                   # photon → stay_p
+    if type == "fiftyfifty":
+        p_eb = 0.33                     # electron → brems
+        p_ea = 0.33                     # electron → annihilation
+        p_es = 1-p_eb - p_ea            # electron → stay_e
+        p_pp = 0.5                      # photon → pair production
+        p_ps = 1-p_pp                   # photon → stay_p
+    if type=="random":
+        p1 = np.random.rand(3)
+        p1 /= p1.sum()
+        p_eb, p_ea, p_es = p1
+        p2 = np.random.rand(2)
+        p2 /= p2.sum()
+        p_pp, p_ps = p2
+    if type=="avg_markov":
+        p_eb = 0.29            # electron → brems
+        p_ea = 0.32                                     # electron → annihilation
+        p_es = 1-p_eb - p_ea                            # electron → stay_e
+        p_pp = 0.35            # photon → pair production
+        p_ps = 1-p_pp                                   # photon → stay_p
+    if type=="no_interaction":
+        p_es = np.random.normal(0.7, 0.02)              # electron → brems
+        p_ea = 0.02                                     # electron → annihilation
+        p_eb = 1-p_es - p_ea                            # electron → stay_e
+        p_ps = np.random.normal(0.7, 0.02)              # photon → pair production
+        p_pp = 1-p_ps                                   # photon → stay_p
+
     prob = {  
         'brems': {'brems': p_eb, 'pp': p_pp, 'ann':p_ea, 'stay_e': p_es, 'stay_p':p_ps},
         'pp': {'brems': p_eb, 'pp': 0, 'ann':p_ea, 'stay_e': p_es, 'stay_p':0}, 
@@ -188,7 +215,7 @@ def electron_decay(neg_buffer, pos_buffer, old_inter, old_interactions, prob, no
         neg_buffer.remove(old_inter)
 
 #statistically divide the energies among the outcomes
-def energy_division(total_energy, Z, interactions, buffer, daughters): 
+def energy_division(total_energy, Z, interactions, buffer, daughters, markov_type="model"): 
     #daughters: "brems" (lepton and photon), "ann" (two photons), "pp" (two leptons)
     #buffer: negative for positron, positive for electrons
     energy=total_energy
@@ -196,7 +223,7 @@ def energy_division(total_energy, Z, interactions, buffer, daughters):
         foton_energy = np.random.exponential(scale=0.5*energy) 
         foton_energy = min(foton_energy, energy * 0.99)
         lepton_energy=energy-foton_energy
-        prob = build_markov(lepton_energy, foton_energy, Z, buffer, interactions)
+        prob = build_markov(lepton_energy, foton_energy, Z, buffer, interactions, markov_type)
         energy = [lepton_energy, foton_energy]
         return prob, energy
     if daughters=="pp":
@@ -206,7 +233,7 @@ def energy_division(total_energy, Z, interactions, buffer, daughters):
         fraction = np.clip(np.random.normal(loc=0.5, scale=0.05), 0.1, 0.9)
         K_electron = K_total * fraction
         K_positron = K_total - K_electron
-        prob = build_markov(0, K_electron, Z, buffer, interactions)
+        prob = build_markov(0, K_electron, Z, buffer, interactions,markov_type)
         energy = [ K_positron, K_electron]
         return prob, energy
     if daughters=="ann":
@@ -214,13 +241,13 @@ def energy_division(total_energy, Z, interactions, buffer, daughters):
         E1_fraction = np.clip(np.random.normal(loc=0.5, scale=0.1), 0.1, 0.9)
         E_gamma1 = E_tot * E1_fraction
         E_gamma2 = E_tot - E_gamma1
-        prob = build_markov(0, E_gamma1, Z, buffer, interactions)
+        prob = build_markov(0, E_gamma1, Z, buffer, interactions,markov_type)
         return prob, [E_gamma1, E_gamma2]
     if daughters=="stay_e":
-        prob = build_markov(total_energy, 0, Z, buffer, interactions)
+        prob = build_markov(total_energy, 0, Z, buffer, interactions,markov_type)
         return prob, total_energy
     if daughters=="stay_p":
-        prob=build_markov(0, total_energy, Z, buffer, interactions)
+        prob=build_markov(0, total_energy, Z, buffer, interactions,markov_type)
         return prob, total_energy
     
 

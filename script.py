@@ -8,11 +8,13 @@ import matplotlib.pyplot as plt
 import time
 
 ###Settings###########
-initial_energy=300  #(MeV), >10 for relativistic limit
+initial_energy=1000  #(MeV), >10 for relativistic limit
 depth=40            #Maximum depth of the material
 material_Z=40       #work in progress
+markov_models=["model", "fiftyfifty", "random", "avg_markov", "no_interaction"]
 ####################
 
+"""
 #execution time
 start=time.time()
 #generate the shower
@@ -56,3 +58,20 @@ network_degree(300)
 #average markov simulation vs shower simulation
 analyze_markov_vs_shower()
 
+"""
+#models_vs_degree and energy
+results = analyze_markov_models(
+     markov_models=markov_models,
+     N=50,
+     depth=depth,
+     initial_energy=initial_energy,
+     Z=material_Z,
+     initial_particle="electron",
+     attribute_name=None,   
+)
+print(results["outdeg_stats"])
+print(results["metrics"])
+plt.show() 
+
+#metrics_vs_energy
+network_prop(100, 1000, 10)
